@@ -1,0 +1,38 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "EventgridName": {
+      "type": "string",
+      "minLength": 3,
+      "metadata": {
+        "description": "Name of the Eventgrid to create."
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
+    }
+  },
+  "resources": [
+    {
+      "type": "Microsoft.EventGrid/domains",
+      "apiVersion": "2022-06-15",
+      "name": "[parameters('EventgridName')]",
+      "location": "[parameters('location')]",
+      "tags": {
+        "displayName": "Eventgrid"
+      },
+      "properties": {
+        "autoCreateTopicWithFirstSubscription": false,
+        "autoDeleteTopicWithLastSubscription": false,
+        "dataResidencyBoundary": "WithinRegion",
+        "inputSchema": "EventGridSchema",
+        "publicNetworkAccess": "Disabled"
+      }
+    }
+  ]
+}

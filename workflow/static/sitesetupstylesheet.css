@@ -1,0 +1,186 @@
+/* #Copyright (c) Microsoft. All rights reserved. */
+#siteSetupNavigation{
+    margin-bottom: 20px;
+}
+
+#siteSetupNavigation .tab{
+    border-bottom: 1px solid #d6d6d6;
+    padding: 6px;
+    font-weight: bold;
+    background-color: black;
+    border-color:  #375a7f;
+}
+
+#siteSetupNavigation .tab--selected{
+    border-top: 1px solid #d6d6d6;
+    border-bottom: 1px solid #d6d6d6;
+    background-color:  #375a7f;
+    color: white;
+}
+
+#siteSetupNavigation .tab--disabled{
+    color: gray;
+}
+#siteSetupNavigation .tab--disabled:hover{
+    cursor: default;
+}
+.nextTabCol button {
+    width:100%;
+    margin:0;
+    border-radius: 0;
+    background-color: #d6d6d6;
+    color: black;
+    min-height: auto;
+    height: 38px;
+}
+.nextTabCol{
+    padding-left:0
+}
+.tabCol{
+    padding-right:0
+}
+/* ============================================ */
+#siteInformationContainer button{
+    margin-bottom: 20px;
+    width: 100%;
+    height: auto;
+}
+#siteInformationContainer button:disabled, .nextTabCol button:disabled{
+    background-color: gray;
+}
+#siteInformationContainer button:disabled:hover, .nextTabCol button:disabled:hover {
+    cursor: default;
+    background-color: gray;
+}
+#graph{
+    width: '100%';
+    background:gray;
+    height:500px;
+}
+
+.react-numeric-input input {
+    width: 100px !important;
+}
+
+input[type='radio']{
+    height: auto;
+    margin-left: 15px;
+    margin-right: 5px;
+}
+#siteInformationContainer .row {
+    margin-bottom: 10px;
+}
+/* ============================================ */
+#forecastSetupContainer{
+    width: 100%;
+    max-width: 100%;
+}
+#forecastSetupContainer input{
+    width:100%
+}
+#forecastSetupContainer button{
+    margin-top: 20px;
+    width: 100%;
+    height: auto;
+}
+#forecastSetupContainer button:disabled{
+    background-color: gray;
+}
+#forecastSetupContainer button:disabled:hover{
+    cursor: default;
+    background-color: gray;
+}
+#forecastSetupContainer .row{
+    margin-bottom:20px;    
+}
+#forecastSetupContainer .row:first-child{
+    margin-top: 10px;
+}
+
+#editing-rows-button{
+    margin-top:0;
+    margin-bottom:30px;
+}
+
+#addRowButton{
+    margin-top: 0;
+}
+/* ============================================ */
+#featureEngineeringContainer{
+    width: 100%;
+    max-width: 100%;
+}
+
+#featureEngineeringContainer button{
+    margin-top: 20px;
+    margin-bottom: 20px;
+    width: 100%;
+    height: auto;
+}
+#featureEngineeringContainer button:disabled{
+    background-color: gray;
+}
+#featureEngineeringContainer button:disabled:hover{
+    cursor: default;
+    background-color: gray;
+}
+/* ============================================ */
+#multivariateEDAContainer button{
+    margin-top: 20px;
+    margin-bottom: 20px;
+    width: 100%;
+    height: auto;
+}
+#multivariateEDAContainer button:disabled{
+    background-color: gray;
+}
+#multivariateEDAContainer button:disabled:hover{
+    cursor: default;
+    background-color: gray;
+}
+
+/* ============================================ */
+
+#abalationContainer .row{
+    margin-top: 10px;
+}
+
+#abalationContainer input, #algorithms, #azuregeography, #permanentColumns{
+    width:300px;
+    float: right;
+}
+
+#abalationContainer button{
+    margin-bottom: 20px;
+    width: 100%;
+    height: auto;
+}
+#abalationContainer button:disabled{
+    background-color: gray;
+}
+#abalationContainer button:disabled:hover{
+    cursor: default;
+    background-color: gray;
+}
+
+#experimentDetailsList{
+    overflow-x: scroll;
+}
+/* ============================================ */
+/* DataTable Styling */
+#sourcetable{
+    margin-top: 20px;
+}
+#sourceListTable th,#sourcetable th,#adding-rows-table th,#forecasttable th,#timezoneConversionTable th,#addTransformTable th,#addTransformListToTable th,#interpolateTable th,#ColumnsTable th,#multivariateTable th,#experimentDetailsList th{
+    font-weight: bold;
+    background-color: rgb(210, 210, 210);
+    text-align: center;
+    font-family: 'Calibri';
+}
+#sourceListTable td,#sourcetable td,#adding-rows-table td,#forecasttable td,#timezoneConversionTable td,#addTransformListToTable td,#ColumnsTable td,#experimentDetailsList td,#addTransformTable td,#interpolateTable td,#multivariateTable td{
+    background-color:white;
+    text-align: center;
+    font-family: 'Calibri';
+}
+
+

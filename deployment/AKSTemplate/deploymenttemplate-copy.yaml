@@ -1,0 +1,30 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: $$experimentset$$
+  labels:
+      name: $$experimentset$$
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+     name: $$experimentset$$
+  template:
+    metadata:
+      labels:
+         name: $$experimentset$$
+    spec:
+      containers:
+        - name: $$experimentset$$
+          image: $$acr$$/$$experimentset$$:latest
+          imagePullPolicy: Always
+          ports:
+          - containerPort: 80
+            protocol: TCP
+          env:
+          - name: AML_WORKSPACE_NAME
+            value: $$aml$$
+          - name: RESOURCE_GROUP_NAME
+            value: $$resourcegroup$$
+          - name: SUBSCRIPTION_ID
+            value: $$subscription$$

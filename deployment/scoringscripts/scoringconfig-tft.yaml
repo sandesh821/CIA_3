@@ -1,0 +1,48 @@
+#Copyright (c) Microsoft. All rights reserved.
+ScoringConfig:
+  experimentset: "experimentset1"
+  experiment: "experiment2"
+  modelName : "TFT"
+  scriptSourceDir : "./code/mlcode"
+  environmentYAMLFile : "environment.yml"
+  environment: "frameworkEnvironment"
+  entryPoint : "scoretft.py"
+  requiredColumns: ['IoT_hs_windspeed']
+  targetColumn: "power_power"
+  futureCovariates: ['darksky_ds_windspeed']
+  dateField: "DateTime"
+  modelPath : "outputs/experimentset1/experiment2/20230201181554/"
+  inputDataFilename : "data_score_input.csv"
+  # Parameters to get predictions
+  parameters : {
+      "DartsTFT" : {
+        "n" : 6
+        ,"forecast_horizon" : 24
+        ,"verbose" : False
+        ,"last_points_only" : False }, 
+      "DartsTCN" : {
+         "n" : 6
+        ,"forecast_horizon" : 24
+        ,"verbose" : False
+        ,"last_points_only" : False }, 
+      "DartsNBeats" : {
+        "n" : 6
+        ,"forecast_horizon" : 24
+        ,"verbose" : False
+        ,"last_points_only" : False }, 
+      "DeepMC" : {
+        "horizon" : 6
+        ,"trunc" : 512
+        ,"lookback" : 24
+        ,"freq" : "60min"
+        ,"frequency" : 1
+        ,"frequency_duration" : "H"
+        ,"predDate" : '2018-09-25 00:00:00'
+      },
+      "TFT" : {
+        "forecast_horizon" : 24
+        ,"frequency" : 1
+        ,"frequency_duration" : "H"
+        ,"lookback" : 24
+        }
+    }

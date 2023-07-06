@@ -1,0 +1,20 @@
+/* #Copyright (c) Microsoft. All rights reserved. */
+#fct_btn, #experimentsetname, #experimentSetForm button{
+    width: 100%;
+    height: auto;
+}
+#fct_btn:disabled, #experimentSetForm button:disabled{
+    background-color: gray;
+}
+#fct_btn:disabled:hover, #experimentSetForm button:disabled:hover{
+    cursor: auto;
+    background-color: gray;
+}
+
+#experimentSetForm label{
+    margin-top:10px
+}
+
+#newExperimentSetParentDiv label{
+    margin-top:10px
+}

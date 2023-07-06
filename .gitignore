@@ -1,0 +1,47 @@
+# ignore all logs
+*.amltmp
+configyaml_generator/*.yaml
+configyaml_generator/*.csv
+platform_code/*.yaml
+platform_code/*.csv
+platform_code/dboperations/config.py
+platform_code/__pycache__/*.pyc
+
+# ignore database project temp files & logs
+/.vs
+/database/.vs/database
+/database/Import Schema Logs
+/database/database.jfm
+/database/database.dbmdl
+/database/obj
+/obj
+
+infrastructure_manager/*.csv
+infrastructure_manager/__pycache__/*.pyc
+
+configyaml_generator/__pycache__/*.pyc
+configyaml_generator/config/*.yaml
+platform_code/outputs/results.csv
+
+workflow/*.csv
+platform_code/configyaml_generator/configs/*.yaml
+platform_code/configyaml_generator/__pycache__/*
+platform_code/infrastructure_manager/__pycache__/*
+platform_code/infrastructure_manager/__pycache__/*
+platform_code/configyaml_generator/__pycache__/*
+deployment/__pycache__/*
+__pycache__/*
+platform_code/masterConfiguration.py
+platform_code/code/masterConfiguration.py
+utilities/azure/__pycache__/*
+utilities/__pycache__/*
+utilities/dboperations/__pycache__/*
+*.pyc
+golive/golive_*/*
+outputs/*
+*.amlignore
+deployment/solarewbrown/*
+deployment/solartestexp/*
+deployment/scoringconfig.yaml
+golive/goliveappconfig.py
+utilities/config.py

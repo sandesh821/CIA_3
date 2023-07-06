@@ -1,0 +1,55 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: $$experimentset$$
+spec:
+  schedule: "$$schedule$$" #
+  successfulJobsHistoryLimit : 3
+  failedJobsHistoryLimit : 3
+  jobTemplate:
+    spec:
+      ttlSecondsAfterFinished: 360000
+      template:
+        metadata:
+          labels:
+            name: $$experimentset$$
+            aadpodidbinding: $$podidentityname$$
+        spec:
+          containers:
+            - name: $$experimentset$$
+              image: $$acr$$/$$experimentset$$:latest
+              imagePullPolicy: Always
+              stdin: true
+              tty: true
+              env:
+                - name: AMLWORKSPACENAME
+                  value: $$aml$$
+                - name: AML_WORKSPACE_NAME
+                  value: $$aml$$
+                - name: RESOURCEGROUP
+                  value: "['$$resourcegroup$$']"
+                - name: RESOURCE_GROUP_NAME
+                  value: "$$resourcegroupnameforplatformcode$$"
+                - name: SUBSCRIPTION_ID
+                  value: "$$subscriptionidforplatformcode$$"
+                - name: SUBSCRIPTIONID
+                  value: "['$$subscription$$']"
+                - name: STORAGEACCOUNTNAME
+                  value: '$$STORAGEACCOUNTNAME$$'
+                - name: AKSSERVICE
+                  value: '$$aksservice$$'
+                - name: ACR
+                  value: "$$acr$$"
+                - name: KEYVAULT
+                  value: "$$KEYVAULT$$"
+                - name: KEY_VAULT
+                  value: "$$KEYVAULT$$"
+                - name: GOLIVESTORAGEACCOUNTNAME
+                  value: "$$GOLIVESTORAGEACCOUNTNAME$$"
+                - name: GOLIVEFUNCTIONAPP
+                  value: "$$GOLIVEFUNCTIONAPP$$"
+                - name: FUNCTIONAPPNAME
+                  value: "$$FUNCTIONAPPNAME$$"
+              command: ["python"]
+              args: ["main.py"]
+          restartPolicy: OnFailure

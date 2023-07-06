@@ -1,0 +1,33 @@
+trigger:
+- main
+
+pool:
+  vmImage: 'windows-latest'
+
+variables:
+  configuration: release
+  platform: 'any cpu'
+  solutionPath: '$(Build.SourcesDirectory)/database/database.sln'
+
+steps:
+- task: VSBuild@1
+  displayName: Build solution
+  inputs:
+    solution: $(solutionPath)
+    platform: $(platform)
+    configuration: $(configuration)
+    clean: true
+
+- task: CopyFiles@2
+  displayName: Copy DACPAC
+  inputs:
+    SourceFolder: '$(Build.SourcesDirectory)/database/bin/$(configuration)'
+    Contents: '*.dacpac'
+    TargetFolder: '$(Build.ArtifactStagingDirectory)/drop'
+
+- task: PublishBuildArtifacts@1
+  displayName: 'Publish artifact'
+  inputs:
+    PathtoPublish: '$(Build.ArtifactStagingDirectory)/drop'
+    ArtifactName: database
+    publishLocation: container

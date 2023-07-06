@@ -1,0 +1,41 @@
+/* #Copyright (c) Microsoft. All rights reserved. */
+.btnCls{
+    width: 100%;
+    max-width: 100%;
+    min-height: 35px;
+    float: left;
+    margin-top: 25px;
+    height: 35px;
+}
+.btnCls:disabled{
+    background-color: gray;
+}
+.btnCls:disabled:hover{
+    cursor: auto;
+    background-color: gray;
+}
+
+#transformationSection, #edaSection, #dateFieldSelectionSection {
+    border-bottom: 1px solid gray;
+    padding: 20px 10px;
+}
+
+#timezoneConversionTable, #addTransformListToTable{
+    margin-top: 20px;
+}
+
+.sectionHeader{
+    font-weight: "bold"
+}
+
+.visualizationSelection{
+    margin-bottom: 10px;
+}
+
+#timezoneConversionTable{
+    overflow-x: scroll;
+}
+
+#table1Inputs{
+    margin-bottom:10px;
+}

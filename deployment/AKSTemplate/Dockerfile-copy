@@ -1,0 +1,55 @@
+#Copyright (c) Microsoft. All rights reserved.
+#FROM nvcr.io/nvidia/k8s/dcgm-exporter:2.1.8-2.4.0-rc.3-ubuntu18.04 as build
+#FROM nvidia/cuda:9.0-cudnn7-runtime
+#FROM nvcr.io/nvidia/tensorflow:23.02-tf2-py3
+#RUN apt-get update
+#RUN apt-get install -y octave
+
+FROM mcr.microsoft.com/azureml/openmpi3.1.2-ubuntu18.04:20220412.v1@sha256:7b2748bbf455a2d5adc8dd5af3c5c7890a23ef8336458251b6ebd5093f91eca0
+
+RUN mkdir -p $HOME/.cache
+WORKDIR /
+
+ARG DOCKER_PATH
+ARG ENVIRONMENT_YAML
+
+# Print docker path
+RUN echo "$DOCKER_PATH"
+
+#Print environment yaml
+RUN echo "$ENVIRONMENT_YAML"
+
+#COPY azureml-environment-setup/99brokenproxy /etc/apt/apt.conf.d/
+RUN if dpkg --compare-versions `conda --version | grep -oE '[^ ]+$'` lt 22.11.1; then conda install conda==22.11.1; fi
+COPY ./src/code/$ENVIRONMENT_YAML azureml-environment-setup/mutated_conda_dependencies.yml
+
+RUN ldconfig /usr/local/cuda/lib64/stubs && conda env create -p /azureml-envs/$DOCKER_PATH -f azureml-environment-setup/mutated_conda_dependencies.yml && rm -rf "$HOME/.cache/pip" && conda clean -aqy && CONDA_ROOT_DIR=$(conda info --root) && rm -rf "$CONDA_ROOT_DIR/pkgs" && find "$CONDA_ROOT_DIR" -type d -name __pycache__ -exec rm -rf {} + && ldconfig
+ENV PATH /azureml-envs/$DOCKER_PATH/bin:$PATH
+
+# COPY azureml-environment-setup/send_conda_dependencies.py azureml-environment-setup/send_conda_dependencies.py
+
+RUN echo "Copying environment context"
+# COPY azureml-environment-setup/environment_context.json azureml-environment-setup/environment_context.json
+# RUN python /azureml-environment-setup/send_conda_dependencies.py -p /azureml-envs/$DOCKER_PATH
+
+RUN conda install -c conda-forge cudatoolkit=11.2.2 cudnn=8.1.0
+
+ENV AZUREML_CONDA_ENVIRONMENT_PATH /azureml-envs/$DOCKER_PATH
+ENV LD_LIBRARY_PATH /azureml-envs/$DOCKER_PATH/lib:$LD_LIBRARY_PATH
+ENV CONDA_DEFAULT_ENV=$DOCKER_PATH CONDA_PREFIX=/azureml-envs/$DOCKER_PATH
+
+#ENV LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CONDA_PREFIX/lib/
+
+# COPY azureml-environment-setup/spark_cache.py azureml-environment-setup/log4j.properties /azureml-environment-setup/
+# RUN if [ $SPARK_HOME ]; then /bin/bash -c '$SPARK_HOME/bin/spark-submit  /azureml-environment-setup/spark_cache.py'; fi
+# RUN rm -rf azureml-environment-setup
+
+ENV AZUREML_ENVIRONMENT_IMAGE True
+
+# Copy files to working directory
+COPY ./src/ /app/src/
+WORKDIR /app/src
+
+# Run the script
+#CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "80"]
+# ENTRYPOINT ["python", "main.py"]

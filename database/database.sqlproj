@@ -1,0 +1,224 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="4.0">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <Name>database</Name>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectVersion>4.1</ProjectVersion>
+    <ProjectGuid>{a52a54fa-4a16-47a8-8eb6-c72756c016b4}</ProjectGuid>
+    <DSP>Microsoft.Data.Tools.Schema.Sql.SqlAzureV12DatabaseSchemaProvider</DSP>
+    <OutputType>Database</OutputType>
+    <RootPath>
+    </RootPath>
+    <RootNamespace>database</RootNamespace>
+    <AssemblyName>database</AssemblyName>
+    <ModelCollation>1033,CI</ModelCollation>
+    <DefaultFileStructure>BySchemaAndSchemaType</DefaultFileStructure>
+    <DeployToDatabase>True</DeployToDatabase>
+    <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
+    <TargetLanguage>CS</TargetLanguage>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <SqlServerVerification>False</SqlServerVerification>
+    <IncludeCompositeObjects>True</IncludeCompositeObjects>
+    <TargetDatabaseSet>True</TargetDatabaseSet>
+    <DefaultCollation>SQL_Latin1_General_CP1_CI_AS</DefaultCollation>
+    <DefaultFilegroup>PRIMARY</DefaultFilegroup>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <OutputPath>bin\Release\</OutputPath>
+    <BuildScriptName>$(MSBuildProjectName).sql</BuildScriptName>
+    <TreatWarningsAsErrors>False</TreatWarningsAsErrors>
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <DefineDebug>false</DefineDebug>
+    <DefineTrace>true</DefineTrace>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <OutputPath>bin\Debug\</OutputPath>
+    <BuildScriptName>$(MSBuildProjectName).sql</BuildScriptName>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <DefineDebug>true</DefineDebug>
+    <DefineTrace>true</DefineTrace>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup>
+    <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">11.0</VisualStudioVersion>
+    <!-- Default to the v11.0 targets path if the targets file for the current VS version is not found -->
+    <SSDTExists Condition="Exists('$(MSBuildExtensionsPath)\Microsoft\VisualStudio\v$(VisualStudioVersion)\SSDT\Microsoft.Data.Tools.Schema.SqlTasks.targets')">True</SSDTExists>
+    <VisualStudioVersion Condition="'$(SSDTExists)' == ''">11.0</VisualStudioVersion>
+  </PropertyGroup>
+  <Import Condition="'$(SQLDBExtensionsRefPath)' != ''" Project="$(SQLDBExtensionsRefPath)\Microsoft.Data.Tools.Schema.SqlTasks.targets" />
+  <Import Condition="'$(SQLDBExtensionsRefPath)' == ''" Project="$(MSBuildExtensionsPath)\Microsoft\VisualStudio\v$(VisualStudioVersion)\SSDT\Microsoft.Data.Tools.Schema.SqlTasks.targets" />
+  <ItemGroup>
+    <Folder Include="Properties" />
+    <Folder Include="logs\" />
+    <Folder Include="logs\Tables\" />
+    <Folder Include="Security\" />
+    <Folder Include="logs\Stored Procedures\" />
+    <Folder Include="dbo\" />
+    <Folder Include="dbo\Tables\" />
+    <Folder Include="static\" />
+    <Folder Include="static\Tables\" />
+    <Folder Include="dbo\Stored Procedures\" />
+    <Folder Include="dbo\Views\" />
+    <Folder Include="score\" />
+    <Folder Include="score\Tables\" />
+    <Folder Include="golive\" />
+    <Folder Include="golive\Tables\" />
+    <Folder Include="score\Stored Procedures\" />
+    <Folder Include="golive\Stored Procedures\" />
+    <Folder Include="logs\Views\" />
+  </ItemGroup>
+  <ItemGroup>
+    <Build Include="logs\Tables\runTracker.sql" />
+    <Build Include="logs\Tables\childRunTracker.sql" />
+    <Build Include="logs\Tables\clusterDetails.sql" />
+    <Build Include="logs\Stored Procedures\usp_InsertRunTracking.sql" />
+    <Build Include="logs\Stored Procedures\usp_InsertChildRunTracking.sql" />
+    <Build Include="logs\Stored Procedures\usp_getRunTracker.sql" />
+    <Build Include="logs\Stored Procedures\usp_getChildRunTracker.sql" />
+    <Build Include="logs\Stored Procedures\usp_getClusterDetails.sql" />
+    <Build Include="logs\Stored Procedures\usp_getRunIdsInfo.sql" />
+    <Build Include="Security\logs.sql" />
+    <Build Include="dbo\Tables\transformationFileTimezoneDetails.sql" />
+    <Build Include="dbo\Tables\transformationDetails.sql" />
+    <Build Include="dbo\Tables\scheduledExperimentsList.sql" />
+    <Build Include="dbo\Tables\experimentsList.sql" />
+    <Build Include="dbo\Tables\experimentSetSourceDataDetails.sql" />
+    <Build Include="dbo\Tables\experimentSetSiteDetails.sql" />
+    <Build Include="dbo\Tables\experimentSetForecastSetupDetails.sql" />
+    <Build Include="dbo\Tables\experimentSet.sql" />
+    <Build Include="dbo\Tables\columnTransformationDetails.sql" />
+    <Build Include="static\Tables\timezones.sql" />
+    <Build Include="static\Tables\windturbines.sql" />
+    <Build Include="static\Tables\countries.sql" />
+    <Build Include="dbo\Stored Procedures\usp_updateExperimentStatus.sql" />
+    <Build Include="dbo\Stored Procedures\usp_scheduleExperimentsListForPipeline.sql" />
+    <Build Include="dbo\Stored Procedures\usp_insertTransformationFileTimezoneDetails.sql" />
+    <Build Include="dbo\Stored Procedures\usp_insertTransformationDetails.sql" />
+    <Build Include="dbo\Stored Procedures\usp_insertExperimentsList.sql" />
+    <Build Include="dbo\Stored Procedures\usp_insertExperimentSetSourceDataDetails.sql" />
+    <Build Include="dbo\Stored Procedures\usp_insertExperimentSets.sql" />
+    <Build Include="dbo\Stored Procedures\usp_insertExperimentSetForecastSetupDetails.sql" />
+    <Build Include="dbo\Stored Procedures\usp_insertExperimentSetDetails.sql" />
+    <Build Include="dbo\Stored Procedures\usp_insertColumnTransformationDetails.sql" />
+    <Build Include="dbo\Stored Procedures\usp_getWindTurbines.sql" />
+    <Build Include="dbo\Stored Procedures\usp_getTransformationFileTimezoneDetails.sql" />
+    <Build Include="dbo\Stored Procedures\usp_getTransformationDetails.sql" />
+    <Build Include="dbo\Stored Procedures\usp_getTimezones.sql" />
+    <Build Include="dbo\Stored Procedures\usp_getExperimentsListForPipeline.sql" />
+    <Build Include="dbo\Stored Procedures\usp_getExperimentsList.sql" />
+    <Build Include="dbo\Stored Procedures\usp_getExperimentSetSourceDataDetails.sql" />
+    <Build Include="dbo\Stored Procedures\usp_getExperimentSets.sql" />
+    <Build Include="dbo\Stored Procedures\usp_getExperimentSetForecastSetupDetails.sql" />
+    <Build Include="dbo\Stored Procedures\usp_getExperimentSetDetails.sql" />
+    <Build Include="dbo\Stored Procedures\usp_getCountries.sql" />
+    <Build Include="dbo\Stored Procedures\usp_getColumnTransformationDetails.sql" />
+    <Build Include="dbo\Stored Procedures\usp_getAllScheduledExperimentsList.sql" />
+    <Build Include="dbo\Stored Procedures\usp_deleteTransformationFileTimezoneDetails.sql" />
+    <Build Include="dbo\Stored Procedures\usp_deleteTransformationDetails.sql" />
+    <Build Include="dbo\Stored Procedures\usp_deleteExperimentSetSourceDataDetails.sql" />
+    <Build Include="dbo\Stored Procedures\usp_deleteExperimentSetForecastSetupDetails.sql" />
+    <Build Include="dbo\Stored Procedures\usp_deleteExperimentList.sql" />
+    <Build Include="dbo\Stored Procedures\usp_deleteColumnTransformationDetails.sql" />
+    <Build Include="Security\static.sql" />
+    <Build Include="static\Tables\AzureGeography.sql" />
+    <Build Include="logs\Tables\perfMetrics.sql" />
+    <Build Include="dbo\Tables\newColumnInfo.sql" />
+    <Build Include="dbo\Tables\multivariateEDASelection.sql" />
+    <Build Include="dbo\Tables\interpolationInfo.sql" />
+    <Build Include="dbo\Tables\experimentSetAzureGeography.sql" />
+    <Build Include="dbo\Views\vw_SourceDataDetails.sql" />
+    <Build Include="logs\Stored Procedures\usp_InsertPerfMetrics.sql" />
+    <Build Include="dbo\Stored Procedures\usp_saveSelectedGeography.sql" />
+    <Build Include="dbo\Stored Procedures\usp_insertNewColumnInfo.sql" />
+    <Build Include="dbo\Stored Procedures\usp_insertMultivariateEDASelection.sql" />
+    <Build Include="dbo\Stored Procedures\usp_insertInterpolationInfo.sql" />
+    <Build Include="dbo\Stored Procedures\usp_getNewColumnInfo.sql" />
+    <Build Include="dbo\Stored Procedures\usp_getMultivariateEDASelection.sql" />
+    <Build Include="dbo\Stored Procedures\usp_getInterpolationInfo.sql" />
+    <Build Include="dbo\Stored Procedures\usp_getGeographies.sql" />
+    <Build Include="dbo\Stored Procedures\usp_deleteNewColumnInfo.sql" />
+    <Build Include="dbo\Stored Procedures\usp_deleteMultivariateEDASelection.sql" />
+    <Build Include="dbo\Stored Procedures\usp_deleteInterpolationInfo.sql" />
+    <Build Include="logs\Stored Procedures\usp_getAllExperiment.sql" />
+    <Build Include="logs\Stored Procedures\usp_getAllExperimentSet.sql" />
+    <Build Include="logs\Stored Procedures\usp_getErrors.sql" />
+    <Build Include="logs\Stored Procedures\usp_getExperimentSetAndInternalRunid.sql" />
+    <Build Include="logs\Stored Procedures\usp_getExpNames.sql" />
+    <Build Include="logs\Stored Procedures\usp_getInternalRunID.sql" />
+    <Build Include="logs\Stored Procedures\usp_getAMLRunTrackerRow.sql" />
+    <Build Include="logs\Stored Procedures\usp_InsertStatusTracker.sql" />
+    <Build Include="logs\Stored Procedures\usp_InsertTrainingLossTracker.sql" />
+    <Build Include="logs\Tables\runTrainingLossTracker.sql" />
+    <Build Include="logs\Tables\statusTracker.sql" />
+    <Build Include="dbo\Tables\errorAnalysisMetrics.sql" />
+    <Build Include="dbo\Tables\baseLineValue.sql" />
+    <Build Include="dbo\Views\vw_errorAnalysis.sql" />
+    <Build Include="dbo\Stored Procedures\usp_deleteErrorAnalysisData.sql" />
+    <Build Include="dbo\Stored Procedures\usp_InsertErrorAnalysisMetrics.sql" />
+    <Build Include="dbo\Tables\errorAnalysis.sql" />
+    <Build Include="dbo\Stored Procedures\usp_getEntityType.sql" />
+    <Build Include="dbo\Tables\mergeFileSequence.sql" />
+    <Build Include="dbo\Stored Procedures\usp_insertMergeSequence.sql" />
+    <Build Include="dbo\Stored Procedures\usp_deleteMergeFileSequence.sql" />
+    <Build Include="golive\Tables\modelDeployment.sql" />
+    <Build Include="golive\Tables\EventConfiguration.sql" />
+    <Build Include="golive\Tables\dataIngestion.sql" />
+    <Build Include="golive\Tables\modelSelection.sql" />
+    <Build Include="dbo\Stored Procedures\usp_getTopModels.sql" />
+    <Build Include="golive\Stored Procedures\usp_getModelDeployment.sql" />
+    <Build Include="golive\Stored Procedures\usp_insertModelDeployment.sql" />
+    <Build Include="golive\Stored Procedures\usp_deleteModelDeployment.sql" />
+    <Build Include="golive\Stored Procedures\usp_insertEventConfiguration.sql" />
+    <Build Include="golive\Stored Procedures\usp_deleteEventConfiguration.sql" />
+    <Build Include="golive\Stored Procedures\usp_getEventConfiguration.sql" />
+    <Build Include="golive\Stored Procedures\usp_insertDataIngestion.sql" />
+    <Build Include="golive\Stored Procedures\usp_deleteDataIngestion.sql" />
+    <Build Include="golive\Stored Procedures\usp_getDataIngestion.sql" />
+    <Build Include="golive\Stored Procedures\usp_deleteModelDetails.sql" />
+    <Build Include="golive\Stored Procedures\usp_insertModelDetails.sql" />
+    <Build Include="golive\Stored Procedures\usp_getModelDetails.sql" />
+    <Build Include="Security\score.sql" />
+    <Build Include="Security\golive.sql" />
+    <Build Include="dbo\Stored Procedures\usp_getExperimentSet.sql" />
+    <Build Include="dbo\Stored Procedures\usp_getExperimentId.sql" />
+    <Build Include="dbo\Stored Procedures\usp_getExperimentsListforsuggestions.sql" />
+    <Build Include="logs\Stored Procedures\usp_getChildRunTrackerRow.sql" />
+    <Build Include="logs\Views\slicerView.sql" />
+    <Build Include="logs\Views\trainingLossMonitoringView.sql" />
+    <Build Include="logs\Views\trainingSummaryView.sql" />
+    <Build Include="golive\Tables\predictionSchedule.sql" />
+    <Build Include="golive\Tables\NotificationConfig.sql" />
+    <Build Include="golive\Tables\dataDrift.sql" />
+    <Build Include="dbo\Tables\ensembleInfo.sql" />
+    <Build Include="dbo\Tables\ensemble.sql" />
+    <Build Include="dbo\Tables\biascorrectionFactors.sql" />
+    <Build Include="dbo\Views\errorAnalysis_Quantile_Unpivot.sql" />
+    <Build Include="golive\Stored Procedures\usp_updatePredictionSchedule.sql" />
+    <Build Include="golive\Stored Procedures\usp_InsertTargetDriftAnalysisMetrics.sql" />
+    <Build Include="golive\Stored Procedures\usp_insertPredictionSchedule.sql" />
+    <Build Include="golive\Stored Procedures\usp_insertNotificationConfig.sql" />
+    <Build Include="golive\Stored Procedures\usp_InsertModelDriftAnalysisMetrics.sql" />
+    <Build Include="golive\Stored Procedures\usp_InsertDataDriftAnalysisMetrics.sql" />
+    <Build Include="golive\Stored Procedures\usp_getScheduledExperimentNameForRetraining.sql" />
+    <Build Include="golive\Stored Procedures\usp_getPredictionScheduleStatus.sql" />
+    <Build Include="golive\Stored Procedures\usp_getPredictionSchedule.sql" />
+    <Build Include="golive\Stored Procedures\usp_getNotificationConfig.sql" />
+    <Build Include="golive\Stored Procedures\usp_getExperimentRunSource.sql" />
+    <Build Include="golive\Stored Procedures\usp_deleteNotificationConfig.sql" />
+    <Build Include="dbo\Stored Procedures\usp_insertEnsembleInfo.sql" />
+    <Build Include="dbo\Stored Procedures\usp_getMergeSequence.sql" />
+    <Build Include="dbo\Stored Procedures\usp_getExperimentsOutputs.sql" />
+    <Build Include="dbo\Stored Procedures\usp_getEnsembleInfo.sql" />
+    <Build Include="dbo\Stored Procedures\usp_getCorrectionFactors.sql" />
+    <Build Include="dbo\Stored Procedures\usp_deleteEnsembleInfo.sql" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,77 @@
+trigger:
+- none
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+parameters:
+- name: ServiceConnection
+  type: string
+  default: arm-service-connection
+  displayName: Azure Subscription Name
+
+- name: resourceGroupName
+  type: string
+  default: fp2-test-rg
+  displayName: Resource Group Name
+
+- name: workspaceName
+  type: string
+  default: fp2_amlws
+  displayName: AML workspace Name
+
+
+variables:
+- name: subscriptionId
+  value: ''
+
+steps:
+
+- task: UsePythonVersion@0
+  inputs:
+    versionSpec: '3.8'
+  displayName: 'Use Python 3.8'
+
+- task: AzureCLI@2
+  displayName: 'Get Subscriptionid for AML workspace'
+  inputs:
+    azureSubscription: '${{ parameters.ServiceConnection }}'
+    scriptType: 'bash'
+    scriptLocation: inlineScript
+    inlineScript: |
+        subscription_id=$(az account show --query 'id' --output tsv)
+        echo "##vso[task.setvariable variable=subscriptionId]$subscription_id"
+  
+- task: AzureCLI@2
+  displayName: 'Create two AML environments'
+  inputs:
+    azureSubscription: '${{ parameters.ServiceConnection }}'
+    scriptLocation: 'inlineScript'
+    scriptType: bash
+    inlineScript: |
+      az account set --subscription $(subscriptionId)
+      az configure --defaults workspace=${{parameters.workspaceName}} group=${{parameters.resourceGroupName}}
+      az upgrade
+      az extension add -n ml
+      cd ./platform_code/code
+      echo 'Creating framework environment...'
+      az ml environment create --file frameworkEnvironment.yml
+      echo 'Creating deepmc framework environment...'
+      az ml environment create --file deepmcFrameworkEnvironment.yml
+      
+
+- task: AzureCLI@2
+  displayName: 'Update DeepMC environment'
+  inputs:
+    azureSubscription: '${{ parameters.ServiceConnection }}'
+    scriptLocation: 'inlineScript'
+    scriptType: bash
+    inlineScript: |
+      az account set --subscription $(subscriptionId)
+      az configure --defaults workspace=${{parameters.workspaceName}} group=${{parameters.resourceGroupName}}
+      az upgrade
+      az extension add -n ml
+      pip install azureml-core
+      cd ./platform_code/code
+      echo 'Running Python script...'
+      python deepmcupdate.py

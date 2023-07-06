@@ -1,0 +1,9 @@
+# ignore all logs
+*.amltmp
+data/
+erroranalysis/
+outputs/
+__pycache__/
+codeversiondetails.json
+*.yaml
+*.csv

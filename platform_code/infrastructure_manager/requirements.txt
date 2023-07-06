@@ -1,0 +1,5 @@
+azure-keyvault-secrets
+binpacking
+azure-storage-blob==12.6.0b1
+msal-extensions~=0.3.0
+azure-identity

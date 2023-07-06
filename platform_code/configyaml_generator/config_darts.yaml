@@ -1,0 +1,164 @@
+#Copyright (c) Microsoft. All rights reserved.
+SourceConfig: 
+
+  source_dict : {"Owner":"XYZ", "Site name":"Hornsdale", "Resource Type":"Wind" , 
+              "Resource Configuration":"Turbine","Manufacturer Name":"Man1",
+              "Model Name" : "Model1",
+              "Latitude":44.1381958, "Longitude":87.3146306} # Currently not used in Preprocess layer
+
+  scripts_directory : './code/preprocess'
+  container_name : "blobdata"  # Currently not used in Preprocess layer
+  secret_name : "forecastblobkey"  # Currently not used in Preprocess layer
+  account_name : 'forecastdatapoc'  # Currently not used in Preprocess layer
+  datastore_name :  'windhornsdale' #**Mandatory | Azure ML DATASTORE name
+
+  # entity details like price , power etc...
+  #**Mandatory | Example: 'entity.csv'
+  entity_data : 'entity_5years.csv' 
+
+  # Historical entity details like windspeed , wind direction , IOT data etc.
+  #Example: 'past_covariates.csv'
+  past_covariates : 'past_covariates_5years.csv' 
+  # Forecast API data like windspeed , wind direction , solar irradiance etc.
+  future_covariates : [{'solcast_forecast':'future_covariates_5years.csv'}]
+  datetime_col_applicable : 'DateTime' # will be there in all three files.
+  datetime_col_available : 'AvailableTime'  # will be there in future covariates
+  source_datetime_col : 'DateTime'
+  
+PreprocessConfig:
+  # Addition or removal of columns configuration(implementation path for new features,path : ./preprocess/FeatureUtils.py)
+  manage_column : 
+   - add_column : ["extract_hour(data_df,'Hour')","extract_day(data_df,'Day')" ]
+  # Rename columns
+   - rename_column : {'Power' : 'Power'}  # rename column based on the source (external/internal/forecast/historical)
+   - conversion_cols : {}  
+  # Missing values imputation configurations
+  imputation_columns : 
+   - interpolate_cols : [{ 'hist_WindSpeed10m': {'method' : 'linear', 'direction' :'both', 'limit' : 10},
+                            'solcast_forecast_windSpeed': {'method' : 'linear', 'direction' :'both', 'limit' : 10}} ] # method and direction configurations will be set here
+   - stats_cols : {'Power':'mean' , 'hist_WindSpeed10m' : 'mean'}
+   - MICE_cols : {'col_list1':{'columns':['Power']}}  
+   - fill_cols : []
+   - filter_cols : [] # Filter data based on threshold for the column
+   - reindex_cols : [] #["hist_WindSpeed10m","Power","solcast_forecast_windSpeed"] 
+    # FFILL and BFILL will be set here , explore config in FFILL and BFILL methods
+
+  dataset_start_time : "2018-06-05"
+  future_covariate_times_str : ["00:00:00"] # Future covariates api runs atleast once in a day
+  future_covariate_lookahead : 6
+  lookback : 24
+  lookahead : 6
+  frequency : 1
+  frequency_duration : "H"
+  output_location : 'cleaned_data'
+
+PipelineConfig:
+  experimentName : "DartsTCNTraining"
+  experimentTag : "experiment10"
+  preprocessEnvironmentName : "frameworkEnvironment"
+  preprocessCluster : "preprocesscluster"
+  environmentName : ["frameworkEnvironment","frameworkEnvironment"]#,"frameworkEnvironment","deepmcFrameworkEnvironment"]
+  cpuClusterName : ["d32v3-32c-128-800-cent","computeclusterwestus01"]#,"computeclusterwestus01","deepmccomputecluster"]
+  scriptSourceDir : "./code"
+  environmentYAMLFile : ["environment.yml","environment.yml"]#,"environment.yml","deepmcenvironment.yml"]
+  entryPoint : ["mlcode/trainTFT.py","mlcode/trainDarts.py"]#,"code/trainDarts.py","code/trainDeepMC.py"]#
+  dataFileName : ['data','data']#,'data','deepmc_data']#'deepmc_data'
+  outputFolderName : "outputs"
+  models : ["TFT","DartsTCN"]#,"DartsNBeats","DeepMC"]#
+  internalPipelineConfig : {"environmentName": "deepmcFrameworkEnvironment"
+                            ,"environmentYAMLFile": "deepmcenvironment.yml"
+                            ,"entryPoint":"mlcode/trainDeepMCInternalModels.py"
+                            ,"cpuClusterName":"d4s-v3-4c-16-32-east"
+                            ,"experimentName":"internalTraining"
+                            }
+  timeout: 9223372036854775807
+
+TrainConfig:
+  requiredColumns: ["hist_WindSpeed10m"]
+  targetColumn: "Power"
+  futureCovariates: ["hist_SurfacePressure"]
+  dateField: "DateTime"
+  train_end: '2018-09-25 23:00:00' #Training dataset end
+  val_start: '2018-10-01 00:00:00' #This is applicable only for DeepMC
+  val_end: '2018-10-05 12:00:00' #Validation dataset end date
+   
+  #Slicing hyperparameters
+  n_tuning_trials : 20
+  isOptimizationEnabled : True
+  isValidationEnabled : True
+  isErrorAnalysisEnabled : False
+  parameters : {
+    "DartsTCN" : {"n_epochs": 15, "dropout": 0.5, "dilation_base": 1, "kernel_size": 5, "num_filters": 3,"weight_norm":True,"hidden_size":2,"lstm_layers":True,"random_state":0, "verbose":True},
+    "DartsTFT" : {"n_epochs": 1, "dropout":0.12,"num_attention_heads":4,"hidden_size":19,"lstm_layers":1,"batch_size":32,"add_relative_index":False,"random_state":0, "verbose":True},
+    "DartsNBeats" : {"num_stacks": 5, "num_blocks": 4, "num_layers": 5, "layer_widths": 768, "n_epochs": 10, "batch_size": 32,"nr_epochs_val_period" : 1 , "verbose" : False },
+    "DeepMC" : {"Blockno":"block2","epochs":10,"trunc":512, "batch_size":32},
+    "DeepMCinternalParams" : {"params": [{"epochs":30,"batch_size":32 ,"learning_rate":0.01,"activation":"relu", "droprate":0.1,"loss":"mse"},{"epochs":30,"batch_size":32 ,"learning_rate":0.01,"activation":"relu", "droprate":0.1,"loss":"mse"},{"epochs":30,"batch_size":32 ,"learning_rate":0.01,"activation":"relu", "droprate":0.1,"loss":"mse"},{"epochs":30,"batch_size":32 ,"learning_rate":0.01,"activation":"relu", "droprate":0.1,"loss":"mse"},{"epochs":30,"batch_size":32 ,"learning_rate":0.01,"activation":"relu", "droprate":0.1,"loss":"mse"},{"epochs":30,"batch_size":32 ,"learning_rate":0.01,"activation":"relu", "droprate":0.1,"loss":"mse"}],
+    "tuningtrials" : 3 },
+    "TFT" : {"random_seed": 2, "max_epochs": 5, "gradient_clip_val": 0.01, "hidden_size": 60, "dropout": 0.2, "hidden_continuous_size": 11, "attention_head_size": 3, "learning_rate": 0.001, "batch_size": 32}
+  }
+
+ScoringConfig:
+  modelName : "DartsTCN"
+  sourceFileName : "data_score_input.csv"
+  requiredColumns: ["hist_WindSpeed10m"]
+  targetColumn: "Power"
+  futureCovariates: ["hist_SurfacePressure"]
+  dateField: "DateTime"
+  modelPath : "outputs/DartsTCNTraining/experiment10/20221128133040/"
+  dataFolderName : "data/DartsTCNTraining/experiment10/"   
+  isErrorAnalysisEnabled : True
+  errorAnalysisConfig : {   
+                            "train_end": '2018-09-25 23:00:00' #Training & Validation end (Prediction input to contain 24 lookback steps)
+                            ,"val_start": '2018-09-25 00:00:00' #Test start date (assuming there is a minimum difference between two points is equal to lookahead)
+                            ,"val_end": '2018-09-28 00:00:00' #Test end date
+                            ,"isScore" : True
+                        }
+  # Parameters to get predictions
+  parameters : {
+      "DartsTFT" : {
+        "n" : 6
+        ,"forecast_horizon" : 24
+        ,"verbose" : False
+        ,"last_points_only" : False }, 
+      "DartsTCN" : {
+         "n" : 6
+        ,"forecast_horizon" : 24
+        ,"verbose" : False
+        ,"last_points_only" : False }, 
+      "DartsNBeats" : {
+        "n" : 6
+        ,"forecast_horizon" : 24
+        ,"verbose" : False
+        ,"last_points_only" : False }, 
+      "DeepMC" : {
+        "horizon" : 6
+        ,"trunc" : 512
+        ,"lookback" : 24
+        ,"freq" : "60min"
+        ,"frequency" : 1
+        ,"frequency_duration" : "H"
+        ,"predDate" : '2018-09-25 00:00:00'
+      },
+      "TFT" : {
+        "forecast_horizon" : 6
+        ,"freq" : "60min"
+        ,"lookback" : 24
+        ,"sample_frequency": "H"
+        }
+    }
+
+# This will be removed once deployment pipeline is setup
+ScoringPipelineConfig:
+  # experimentName : "wind_scoring"
+  # environmentName : "deepmcFrameworkEnvironment"
+  # cpuClusterName : "deepmccomputecluster"
+  # scriptSourceDir : "./code/mlcode"
+  # environmentYAMLFile : "deepmcenvironment.yml"
+  # entryPoint : "scoredeepmc.py"
+  # Use below config for darts
+  experimentName : "wind_scoring"
+  environmentName : "frameworkEnvironment"
+  cpuClusterName : "computeclusterwestus01"
+  scriptSourceDir : "./code/mlcode"
+  environmentYAMLFile : "environment.yml"
+  entryPoint : "scoredarts.py"

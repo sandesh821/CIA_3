@@ -1,0 +1,348 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "golivefunctionAppName": {
+      "type": "string",
+      "minLength": 2,
+      "metadata": {
+        "description": "Specify the name of the function application"
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Specify the location for the function application resources"
+      }
+    },
+     "linuxFxVersion": {
+      "type": "string",
+      "defaultValue": "PYTHON|3.8",
+      "metadata": {
+        "description": "The Runtime stack of current web app"
+      }
+    },
+    "runtimeStack": {
+      "type": "string",
+      "defaultValue": "python",
+      "allowedValues": [
+        "powershell",
+        "dotnet",
+        "node",
+        "java",
+        "python"
+      ],
+      "metadata": {
+        "description": "Pick the language runtime that you want enabled"
+      }
+    },
+
+    "storageAccountType": {
+      "type": "string",
+      "defaultValue": "Standard_RAGRS",
+      "allowedValues": [
+        "Standard_LRS",
+        "Standard_GRS",
+        "Standard_RAGRS"
+      ],
+      "metadata": {
+        "description": "Storage Account type"
+      }
+    },
+      "resourceGroupName": {
+       "type": "string",
+      "defaultValue": "[resourceGroup().name]",
+       "metadata": {
+      "description": "The name of the resource group"
+      }
+    },
+    "subscriptionId": {
+      "type": "string",
+      "defaultValue": "[subscription().subscriptionId]",
+      "metadata": {
+        "description": "The ID of the subscription"
+      }
+    },
+    "amlworkspaceName": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of the AML workspace associated"
+      }
+    },
+    "amlstorageaccountName": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of the AML storageaccountName associated"
+      }
+    },
+    "streamstorageaccountName": {
+      "type": "string",
+      "defaultValue": "streamingmasterdata",
+      "metadata": {
+        "description": "The name of the storageaccount associated with streaming data"
+      }
+    },
+    "aksName": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of the AKS associated"
+      }
+    },
+        "acrName": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of the ACR associated"
+      }
+        },
+        "keyvaultName": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of the Keyvault associated"
+      }},
+        "functionappName": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of the Functionapp associated"
+      }  
+
+
+  }},
+   "variables": {
+    "golivefunctionAppName":"[parameters('golivefunctionAppName')]",
+    "hostingPlanName": "[concat(variables('golivefunctionAppName'),'-asp')]",
+    "applicationInsightsName": "[concat(variables('golivefunctionAppName'),'-ai')]",
+    "storageAccountName": "[parameters('streamstorageaccountName')]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "apiVersion": "2022-09-01",
+      "name": "[variables('storageAccountName')]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "[parameters('storageAccountType')]"
+      },
+      "kind": "StorageV2"
+    },
+      {
+      "type": "Microsoft.Storage/storageAccounts/blobServices",
+      "apiVersion": "2019-04-01",
+      "name": "[concat(variables('storageAccountName'), '/default')]",
+      "dependsOn": [
+          "[resourceId('Microsoft.Storage/storageAccounts', concat(variables('storageAccountName')))]"
+      ],
+      "sku": {
+          "name": "Standard_RAGRS"
+      },
+      "properties": {
+          "cors": {
+              "corsRules": []
+          },
+          "deleteRetentionPolicy": {
+              "enabled": false
+          }
+      }
+    },
+     {
+      "type": "Microsoft.Storage/storageAccounts/blobServices/containers",
+      "apiVersion": "2019-04-01",
+      "name": "[concat(variables('storageAccountName'), '/default/badfiles')]", 
+      "dependsOn": [
+        "[resourceId('Microsoft.Storage/storageAccounts/blobServices', variables('storageAccountName'), 'default')]",
+        "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]"
+      ],
+      "properties": {
+        "publicAccess": "None"
+      }
+    },
+    {
+      "type": "Microsoft.Storage/storageAccounts/blobServices/containers",
+      "apiVersion": "2019-04-01",
+      "name": "[concat(variables('storageAccountName'), '/default/cleanedfiles')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Storage/storageAccounts/blobServices', variables('storageAccountName'), 'default')]",
+        "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]"
+      ],
+      "properties": {
+        "publicAccess": "None"
+      }
+    },
+    {
+      "type": "Microsoft.Storage/storageAccounts/blobServices/containers",
+      "apiVersion": "2019-04-01",
+      "name": "[concat(variables('storageAccountName'), '/default/masterdata')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Storage/storageAccounts/blobServices', variables('storageAccountName'), 'default')]",
+        "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]"
+      ],
+      "properties": {
+        "publicAccess": "None"
+      }
+    },
+    {
+      "type": "Microsoft.Storage/storageAccounts/blobServices/containers",
+      "apiVersion": "2019-04-01",
+      "name": "[concat(variables('storageAccountName'), '/default/processedfiles')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Storage/storageAccounts/blobServices', variables('storageAccountName'), 'default')]",
+        "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]"
+      ],
+      "properties": {
+        "publicAccess": "None"
+      }
+    },
+    {
+      "type": "Microsoft.Storage/storageAccounts/blobServices/containers",
+      "apiVersion": "2019-04-01",
+      "name": "[concat(variables('storageAccountName'), '/default/predictions')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Storage/storageAccounts/blobServices', variables('storageAccountName'), 'default')]",
+        "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]"
+      ],
+      "properties": {
+        "publicAccess": "None"
+      }
+    },
+    {
+      "type": "Microsoft.Storage/storageAccounts/blobServices/containers",
+      "apiVersion": "2019-04-01",
+      "name": "[concat(variables('storageAccountName'), '/default/rawdata')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Storage/storageAccounts/blobServices', variables('storageAccountName'), 'default')]",
+        "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]"
+      ],
+      "properties": {
+        "publicAccess": "None"
+      }
+    },
+    {
+      "type": "Microsoft.Storage/storageAccounts/blobServices/containers",
+      "apiVersion": "2019-04-01",
+      "name": "[concat(variables('storageAccountName'), '/default/streamingdata')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Storage/storageAccounts/blobServices', variables('storageAccountName'), 'default')]",
+        "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]"
+      ],
+      "properties": {
+        "publicAccess": "None"
+      }
+    },
+    {
+      "type": "Microsoft.Web/serverfarms",
+      "apiVersion": "2022-03-01",
+      "name": "[variables('hostingPlanName')]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "B3"
+      },
+        "kind": "linux",
+      "properties": {
+        "reserved": true,
+        "computeMode": "Dynamic"
+      }
+    },
+    {
+      "type": "Microsoft.Insights/components",
+      "apiVersion": "2020-02-02",
+      "name": "[variables('applicationInsightsName')]",
+      "location": "[parameters('location')]",
+      "tags": {
+        "[format('hidden-link:{0}', resourceId('Microsoft.Web/sites', variables('applicationInsightsName')))]": "Resource"
+      },
+      "properties": {
+        "Application_Type": "web"
+      },
+      "kind": "web"
+    },
+    {
+      "type": "Microsoft.Web/sites",
+      "apiVersion": "2022-03-01",
+      "name": "[variables('golivefunctionAppName')]",
+      "location": "[parameters('location')]",
+      "kind": "functionapp,linux,container",
+      "sku": {
+        "name": "B3"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/serverfarms', variables('hostingPlanName'))]",
+        "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]",
+        "[resourceId('Microsoft.Insights/components', variables('applicationInsightsName'))]"
+      ],
+      "identity": {
+        "type": "SystemAssigned"
+      },
+      "properties": {
+        "httpsOnly": true,
+        "ftpsState": "FtpsOnly",
+        "reserved": true,
+        "siteConfig": {
+         "acrUseManagedIdentityCreds": true,
+         "linuxFxVersion": "[parameters('linuxFxVersion')]",
+          "appSettings": [
+            {
+              "name": "FUNCTIONS_WORKER_RUNTIME",
+              "value": "[parameters('runtimeStack')]"
+            },
+            {
+              "name": "AzureWebJobsStorage",
+              "value": "[concat('DefaultEndpointsProtocol=https;AccountName=',variables('storageAccountName'), ';EndpointSuffix=', environment().suffixes.storage, ';AccountKey=',listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')), '2022-09-01').keys[0].value)]"
+            },
+            {
+              "name": "FUNCTIONS_EXTENSION_VERSION",
+              "value": "~4"
+            },
+            {
+              "name": "APPINSIGHTS_INSTRUMENTATIONKEY",
+              "value": "[reference(resourceId('microsoft.insights/components',variables('applicationInsightsName')), '2020-02-02').InstrumentationKey]"
+            },
+            {
+              "name": "RESOURCEGROUP",
+               "value": "[concat('[\"', parameters('resourceGroupName'), '\"]')]"
+            },
+            {
+              "name": "SUBSCRIPTIONID",
+               "value": "[concat('[\"', parameters('subscriptionId'), '\"]')]"
+            },
+            {
+              "name": "AMLWORKSPACENAME",
+               "value": "[parameters('amlworkspaceName')]"
+            },
+            {
+              "name": "STORAGEACCOUNTNAME",
+               "value": "[parameters('amlstorageaccountName')]"
+            },
+            {
+              "name": "AKSSERVICE",
+               "value": "[parameters('aksName')]"
+            },
+             {
+              "name": "ACR",
+               "value": "[parameters('acrName')]"
+            },
+             {
+              "name": "KEYVAULT",
+               "value": "[parameters('keyvaultName')]"
+            },
+             {
+              "name": "GOLIVESTORAGEACCOUNTNAME",
+               "value": "[variables('storageAccountName')]"
+            } ,
+            {
+              "name": "GOLIVEFUNCTIONAPP",
+               "value": "[variables('golivefunctionAppName')]"
+            } ,
+             {
+              "name": "FUNCTIONAPPNAME",
+               "value": "[parameters('functionappName')]"
+            } 
+
+          ]
+        },
+        "name": "[variables('golivefunctionAppName')]",
+        "clientAffinityEnabled": false,
+        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms/', variables('hostingPlanName'))]"
+      }
+    }
+  ]
+}

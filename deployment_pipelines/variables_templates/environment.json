@@ -1,0 +1,434 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "baseName": {
+      "type": "string",
+      "maxLength": 10,
+      "minLength": 3,
+      "metadata": {
+        "description": "The base name to use as prefix to create all the resources."
+      }
+    },
+    "envName": {
+      "type": "string",
+      "maxLength": 10,
+      "minLength": 3,
+      "metadata": {
+        "description": "The env name to use as prefix with environment name to the resources."
+      }
+    },
+    "serverName": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of the SQL logical server."
+      }
+    },
+    "sqlDBName": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of the SQL Database."
+      }
+    },
+    "secValueSqlAdmin": {
+      "type": "string",
+      "metadata": {
+        "description": "This is to add a SQL Admin login user name as a secret in Key Vault."
+      }
+    },
+    "secValueSqlPwd": {
+      "type": "securestring",
+      "defaultValue": "[concat('F1', uniqueString('azureml', resourceGroup().id, 'one microsoft', deployment().name, 'forecasting', 'energy solutions'), '!`f')]",
+      "metadata": {
+        "description": "This is to add a SQL Admin login password as a secret in Key Vault."
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "eastus",
+      "allowedValues": [
+        "eastus",
+        "eastus2",
+        "southcentralus",
+        "southeastasia",
+        "westcentralus",
+        "westeurope",
+        "westus2",
+        "centralus"
+      ],
+      "metadata": {
+        "description": "Specifies the location for all resources."
+      }
+    },
+    "workspace": {
+      "type": "string",
+      "defaultValue": "[concat(toLower(parameters('baseName')),'_amlws')]"
+    },
+    "storageAccount": {
+      "type": "string",
+      "defaultValue": "[concat(toLower(parameters('baseName')), toLower(parameters('envName')), 'amlsa')]"
+    },
+    "keyvault": {
+      "type": "string",
+      "defaultValue": "[concat(toLower(parameters('baseName')),'-',toLower(parameters('envName')),'-aml-kv')]"
+    },
+    "appInsights": {
+      "type": "string",
+      "defaultValue": "[concat(toLower(parameters('baseName')),'-',toLower(parameters('envName')),'-aml-ai')]"
+    },
+    "acr": {
+      "type": "string",
+      "defaultValue": "[concat(toLower(parameters('baseName')),toLower(parameters('envName')),'amlcr')]"
+    },
+    "sku": {
+      "type": "string",
+      "defaultValue": "basic",
+      "allowedValues": [
+        "basic",
+        "enterprise"
+      ],
+      "metadata": {
+        "description": "Specifies the sku, also referred as 'edition' of the Azure Machine Learning workspace."
+      }
+    },
+    "amlCompute": {
+      "type": "string",
+      "defaultValue": "[concat(toLower(parameters('baseName')),'compute')]"
+    },
+    "computeInstance": {
+      "type": "string",
+      "defaultValue": "[concat(toLower(parameters('baseName')),'computeinstance')]"
+    },
+    "vmSize": {
+      "defaultValue": "Standard_DS3_v2",
+      "type": "string",
+      "metadata": {
+          "description": "The VM size for compute instance"
+      }
+    },
+    "minNodeCount": {
+      "defaultValue": 0,
+      "type": "int",
+      "metadata": {
+          "description": "The minimum number of nodes to use on the cluster. If not specified, defaults to 0"
+      }
+    },        
+    "maxNodeCount": {
+        "defaultValue": 1,
+        "type": "int",
+        "metadata": {
+            "description": " The maximum number of nodes to use on the cluster. If not specified, defaults to 4."
+        }
+    },
+    "nodeIdleTimeBeforeScaleDown": {
+      "type": "string"
+    },
+    "tenantId": {
+      "defaultValue": "[subscription().tenantId]",
+      "type": "string",
+      "metadata": {
+          "description": "AAD tenant id of the user to which compute instance is assigned to"
+      }
+    },
+    "secretsPermissions": {
+      "type": "array",
+      "defaultValue": [
+        "get,list"
+      ],
+      "metadata": {
+        "description": "Specifies the permissions to secrets in the vault. Valid values are: all, get, list, set, delete, backup, restore, recover, and purge."
+      }
+    },
+    "objectId": {
+        "type": "string",
+        "metadata": {
+            "description": "AAD object id of the user to which compute instance is assigned to"
+        }
+    }
+  },
+  "variables": {
+    "amlWorkspaceName": "[parameters('workspace')]",
+    "storageAccountName": "[parameters('storageAccount')]",
+    "storageAccountType": "Standard_LRS",
+    "keyVaultName": "[parameters('keyvault')]",
+    "tenantId": "[subscription().tenantId]",
+    "applicationInsightsName": "[parameters('appInsights')]",
+    "containerRegistryName": "[parameters('acr')]",
+    "amlCompute": "[parameters('amlCompute')]",
+    "computeInstance": "[parameters('computeInstance')]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "apiVersion": "2018-07-01",
+      "name": "[variables('storageAccountName')]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "[variables('storageAccountType')]"
+      },
+      "kind": "StorageV2",
+      "properties": {
+        "encryption": {
+          "services": {
+            "blob": {
+              "enabled": true
+            },
+            "file": {
+              "enabled": true
+            }
+          },
+          "keySource": "Microsoft.Storage"
+        },
+        "supportsHttpsTrafficOnly": true
+      }
+    },
+    {
+      "type": "Microsoft.Storage/storageAccounts/blobServices",
+      "apiVersion": "2019-04-01",
+      "name": "[concat(variables('storageAccountName'), '/default')]",
+      "dependsOn": [
+          "[resourceId('Microsoft.Storage/storageAccounts', concat(variables('storageAccountName')))]"
+      ],
+      "sku": {
+          "name": "Standard_RAGRS"
+      },
+      "properties": {
+          "cors": {
+              "corsRules": []
+          },
+          "deleteRetentionPolicy": {
+              "enabled": false
+          }
+      }
+    },
+    {
+      "type": "Microsoft.KeyVault/vaults",
+      "apiVersion": "2018-02-14",
+      "name": "[variables('keyVaultName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "tenantId": "[variables('tenantId')]",
+        "sku": {
+          "name": "standard",
+          "family": "A"
+        },
+        "accessPolicies": [
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.KeyVault/vaults/secrets",
+      "apiVersion": "2021-11-01-preview",
+      "name": "[format('{0}/{1}', variables('keyVaultName'), 'subscriptionid')]",
+      "properties": {
+        "value": "[subscription().subscriptionId]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.KeyVault/vaults', variables('keyVaultName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.KeyVault/vaults/secrets",
+      "apiVersion": "2021-11-01-preview",
+      "name": "[format('{0}/{1}', variables('keyVaultName'), 'tenantid')]",
+      "properties": {
+        "value": "[subscription().tenantId]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.KeyVault/vaults', variables('keyVaultName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.KeyVault/vaults/secrets",
+      "apiVersion": "2021-11-01-preview",
+      "name": "[format('{0}/{1}', variables('keyVaultName'), 'forecasting-sql-server')]",
+      "properties": {
+        "value": "[parameters('serverName')]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.KeyVault/vaults', variables('keyVaultName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.KeyVault/vaults/secrets",
+      "apiVersion": "2021-11-01-preview",
+      "name": "[format('{0}/{1}', variables('keyVaultName'), 'forecasting-database')]",
+      "properties": {
+        "value": "[parameters('sqlDBName')]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.KeyVault/vaults', variables('keyVaultName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.KeyVault/vaults/secrets",
+      "apiVersion": "2021-11-01-preview",
+      "name": "[format('{0}/{1}', variables('keyVaultName'), 'forecasting-sql-user')]",
+      "properties": {
+        "value": "[parameters('secValueSqlAdmin')]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.KeyVault/vaults', variables('keyVaultName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.KeyVault/vaults/secrets",
+      "apiVersion": "2021-11-01-preview",
+      "name": "[format('{0}/{1}', variables('keyVaultName'), 'forecasting-sql-pwd')]",
+      "properties": {
+        "value": "[parameters('secValueSqlPwd')]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.KeyVault/vaults', variables('keyVaultName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Insights/components",
+      "apiVersion": "2015-05-01",
+      "name": "[variables('applicationInsightsName')]",
+      "location": "[if(or(equals(parameters('location'),'eastus2'),equals(parameters('location'),'westcentralus')),'southcentralus',parameters('location'))]",
+      "kind": "web",
+      "properties": {
+        "Application_Type": "web"
+      }
+    },
+    {
+      "type": "Microsoft.ContainerRegistry/registries",
+      "apiVersion": "2017-10-01",
+      "name": "[variables('containerRegistryName')]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "Standard"
+      },
+      "properties": {
+        "adminUserEnabled": true
+      }
+    },
+    {
+      "type": "Microsoft.MachineLearningServices/workspaces",
+      "apiVersion": "2018-11-19",
+      "name": "[variables('amlWorkspaceName')]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]",
+        "[resourceId('Microsoft.KeyVault/vaults', variables('keyVaultName'))]",
+        "[resourceId('Microsoft.Insights/components', variables('applicationInsightsName'))]",
+        "[resourceId('Microsoft.ContainerRegistry/registries', variables('containerRegistryName'))]"
+      ],
+      "identity": {
+        "type": "systemAssigned"
+      },
+      "sku": {
+        "tier": "[parameters('sku')]",
+        "name": "[parameters('sku')]"
+      },
+      "properties": {
+        "friendlyName": "[variables('amlWorkspaceName')]",
+        "keyVault": "[resourceId('Microsoft.KeyVault/vaults',variables('keyVaultName'))]",
+        "applicationInsights": "[resourceId('Microsoft.Insights/components',variables('applicationInsightsName'))]",
+        "containerRegistry": "[resourceId('Microsoft.ContainerRegistry/registries',variables('containerRegistryName'))]",
+        "storageAccount": "[resourceId('Microsoft.Storage/storageAccounts/',variables('storageAccountName'))]"
+      }
+    },
+    {
+      "type": "Microsoft.Storage/storageAccounts/blobServices/containers",
+      "apiVersion": "2019-04-01",
+      "name": "[concat(variables('storageAccountName'), '/default/inputdata')]",
+      "dependsOn": [
+          "[resourceId('Microsoft.Storage/storageAccounts/blobServices', variables('storageAccountName'), 'default')]",
+          "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]"
+      ],
+      "properties": {
+          "publicAccess": "None"
+      }
+    },
+    {
+        "type": "Microsoft.Storage/storageAccounts/blobServices/containers",
+        "apiVersion": "2019-04-01",
+        "name": "[concat(variables('storageAccountName'), '/default/trainingdata')]",
+        "dependsOn": [
+          "[resourceId('Microsoft.Storage/storageAccounts/blobServices', variables('storageAccountName'), 'default')]",
+          "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]"
+        ],
+        "properties": {
+            "publicAccess": "None"
+        }
+    },
+    {
+        "type": "Microsoft.Storage/storageAccounts/blobServices/containers",
+        "apiVersion": "2019-04-01",
+        "name": "[concat(variables('storageAccountName'), '/default/testingdata')]",
+        "dependsOn": [
+          "[resourceId('Microsoft.Storage/storageAccounts/blobServices', variables('storageAccountName'), 'default')]",
+          "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]"
+        ],
+        "properties": {
+            "publicAccess": "None"
+        }
+    },
+    {
+      "type": "Microsoft.MachineLearningServices/workspaces/computes",
+      "name": "[concat(variables('amlWorkspaceName'), '/', variables('amlCompute'))]",
+      "apiVersion": "2021-01-01",
+      "location" : "[parameters('location')]",
+      "properties": {
+          "computeType": "AmlCompute",
+          "properties":
+          {
+              "vmSize" : "[parameters('vmSize')]",
+              "scaleSettings":
+              {
+                  "minNodeCount" : "[parameters('minNodeCount')]",
+                  "maxNodeCount" : "[parameters('maxNodeCount')]"
+              }
+          }
+      }
+    },
+    // {
+    //   "type": "Microsoft.MachineLearningServices/workspaces/computes",
+    //   "name": "[concat(variables('amlWorkspaceName'), '/', variables('computeInstance'))]",
+    //   "apiVersion": "2021-07-01",
+    //   "location": "[parameters('location')]",
+    //   "properties": {
+    //       "computeType": "ComputeInstance",
+    //       "properties": {
+    //           "vmSize": "[parameters('vmSize')]",
+    //           "personalComputeInstanceSettings": {
+    //               "assignedUser": {
+    //                   "objectId": "[parameters('objectId')]",
+    //                   "tenantId": "[parameters('tenantId')]"
+    //               }
+    //           }
+    //       }
+    //   }
+    // },
+    {
+      "type": "Microsoft.Sql/servers",
+      "apiVersion": "2021-08-01-preview",
+      "name": "[parameters('serverName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "administratorLogin": "[parameters('secValueSqlAdmin')]",
+        "administratorLoginPassword": "[parameters('secValueSqlPwd')]"
+      }
+    },
+    {
+      "type": "Microsoft.Sql/servers/databases",
+      "apiVersion": "2021-08-01-preview",
+      "name": "[format('{0}/{1}', parameters('serverName'), parameters('sqlDBName'))]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "GP_S_Gen5",
+        "tier": "GeneralPurpose",
+        "family": "Gen5",
+        "capacity": 1
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Sql/servers', parameters('serverName'))]"
+      ],
+      "properties": {
+        "autoExecuteValue": "Enabled"
+      }
+    }
+  ]
+}

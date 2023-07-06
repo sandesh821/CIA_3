@@ -1,0 +1,99 @@
+trigger:
+- none
+
+parameters:
+
+- name: azureServiceConnection
+  type: string
+  default: arm-service-connection
+  displayName: Azure Subscription Name
+
+- name: webappName
+  type: string
+  default: fp2-test-wapp
+  displayName: Web App Name
+
+
+variables:
+  
+  # Web app name
+  webAppName: '${{ parameters.webappName }}'
+
+  # Agent VM image name
+  vmImageName: 'ubuntu-latest'
+
+  # Project root folder. Point to the folder containing manage.py file.
+  projectRoot: '$(System.DefaultWorkingDirectory)'
+
+  # Python version: 3.8
+  pythonVersion: '3.8'
+
+
+stages:
+- stage: Build
+  displayName: Build stage
+  jobs:
+  - job: BuildJob
+    pool:
+      vmImage: $(vmImageName)
+    steps:
+    - task: UsePythonVersion@0
+      inputs:
+        versionSpec: '$(pythonVersion)'
+      displayName: 'Use Python $(pythonVersion)'
+
+    - script: |
+        python -m venv antenv
+        source antenv/bin/activate
+        python -m pip install --upgrade pip
+        pip install setup
+        pip install -r requirements.txt
+      workingDirectory: $(projectRoot)
+      displayName: "Install requirements"
+
+    - task: AzureCLI@2
+      displayName: 'Archive files'
+      inputs:
+        azureSubscription: '${{ parameters.azureServiceConnection }}'
+        scriptType: pscore
+        scriptLocation: inlineScript
+        inlineScript: |
+          cd '$(projectRoot)'
+          zip -r $(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip requirements.txt app.py workflow/ utilities/
+
+    - task: PublishBuildArtifacts@1
+      displayName: 'Publish Build Artifacts'
+      inputs:
+        PathtoPublish: $(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip
+        ArtifactName: drop
+        publishLocation: container
+
+- stage: Deploy
+  displayName: 'Deploy Web App'
+  dependsOn: Build
+  condition: succeeded()
+  jobs:
+  - job: DeploymentJob
+    pool:
+      vmImage: $(vmImageName)
+    steps:
+
+      - task: UsePythonVersion@0
+        inputs:
+          versionSpec: '$(pythonVersion)'
+        displayName: 'Use Python version'
+      
+      - task: DownloadBuildArtifacts@0
+        displayName: 'Download Build Artifacts'
+        inputs:
+          buildType: current
+          downloadType: single
+          artifactName: drop
+          downloadPath: $(System.DefaultWorkingDirectory)
+  
+      - task: AzureWebApp@1
+        displayName: 'Deploy Azure Web App'
+        inputs:
+          azureSubscription: '${{ parameters.azureServiceConnection }}'
+          appName: $(webAppName)
+          package:  $(System.DefaultWorkingDirectory)/drop/$(Build.BuildId).zip

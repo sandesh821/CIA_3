@@ -1,0 +1,83 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "workspaceName": {
+            "type": "string",
+            "metadata": {
+                "description": "Specifies the name of the Azure Machine Learning workspace to which compute instance will be deployed"
+            }
+        },
+        "ownerName": {
+            "type": "string",
+            "metadata": {
+                "description": "Specifies the name of the Azure Machine Learning compute instance to be deployed"
+            }
+        },
+        "location": {
+            "defaultValue": "[resourceGroup().location]",
+            "type": "string",
+            "metadata": {
+                "description": "Location of the Azure Machine Learning workspace."
+            }
+        },
+        "vmSize": {
+            "defaultValue": "Standard_DS3_v2",
+            "type": "string",
+            "metadata": {
+                "description": "The VM size for compute instance"
+            }
+        },
+        "objectId": {
+            "type": "string",
+            "metadata": {
+                "description": "AAD object id of the user to which compute instance is assigned to"
+            }
+        },
+        "inlineCommand": {
+            "type": "string",
+            "defaultValue": "pip install python-git-info",
+            "metadata": {
+                "description": "inline command"
+            }
+        },
+        "tenantId": {
+            "defaultValue": "[subscription().tenantId]",
+            "type": "string",
+            "metadata": {
+                "description": "AAD tenant id of the user to which compute instance is assigned to"
+            }
+        }
+    },
+    "variables": {
+        "computeName": "[concat(replace(toLower(parameters('vmSize')),'_','-'),'-',parameters('ownerName'))]"
+    },
+    "resources": [
+        {
+            "type": "Microsoft.MachineLearningServices/workspaces/computes",
+            "name": "[concat(parameters('workspaceName'), '/', variables('computeName'))]",
+            "apiVersion": "2021-07-01",
+            "location": "[parameters('location')]",
+            "properties": {
+                "computeType": "ComputeInstance",
+                "properties": {
+                    "vmSize": "[parameters('vmSize')]",
+                    "personalComputeInstanceSettings": {
+                        "assignedUser": {
+                            "objectId": "[parameters('objectId')]",
+                            "tenantId": "[parameters('tenantId')]"
+                        }
+                    },
+                    "setupScripts": {
+                        "scripts": {
+                            "creationScript": {
+                                "scriptSource": "inline",
+                                "scriptData": "[base64(parameters('inlineCommand'))]"
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    ]
+}

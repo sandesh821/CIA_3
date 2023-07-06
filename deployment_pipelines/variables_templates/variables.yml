@@ -1,0 +1,57 @@
+variables:
+    - name: ml_service_connection
+      value: aml-service-connection
+    - name: rm_service_connection
+      value: arm-service-connection
+    - name: base_name
+      value: forecast
+    - name: env_name
+      value: test
+    - name: location
+      value: eastus
+
+    - name: amlcompute.maxNodes
+      value: 2
+    - name: amlcompute.Nodes
+      value: 0
+    - name: amlcompute.vmSize
+      value: STANDARD_DS2_V2
+    - name: amldatastore.name
+      value: forecastdatastore
+    - name: amlcompute.objectId
+      value: 
+
+    - name: sql.serverName
+      value: '${{variables.base_name}}${{variables.env_name}}azsql'
+    - name: sql.sqlAdmin
+      value: dbsa
+    - name: sql.sqlDBName
+      value: forecastingDB
+
+    - name: kvSecretNames
+      value: forecasting-sql-user,forecasting-sql-pwd
+
+#----------- BEGIN: Don't make any changes to the below block unless we need a specific name to the Resource ---------------
+#---------------------------------------------------------------------------------------------------------------------------
+    - name: resource_group
+      value: '${{variables.base_name}}-${{variables.env_name}}-rg'
+    - name: workspace_name
+      value: '${{variables.base_name}}_amlws'
+    - name: storageAccountName
+      value: '${{variables.base_name}}${{variables.env_name}}amlsa'
+    - name: keyVaultName
+      value: '${{variables.base_name}}-${{variables.env_name}}-aml-kv'
+    - name: applicationInsightsName
+      value: '${{variables.base_name}}-${{variables.env_name}}-aml-ai'
+    - name: containerRegistryName
+      value: '${{variables.base_name}}${{variables.env_name}}amlcr'
+
+    - name: amlcompute.ClusterName
+      value: '${{variables.base_name}}Compute'
+    - name: amlcompute.InstanceName
+      value: '${{variables.base_name}}ComputeInstance'
+#---------------------------------------------------------------------------------------------------------------------------
+#------------ END ----------------------------------------------------------------------------------------------------------
+
+
+#------------ Change values on blobstore.yml file to create a datastore with specific storage account ----------------------

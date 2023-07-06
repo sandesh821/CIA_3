@@ -1,0 +1,68 @@
+#Copyright (c) Microsoft. All rights reserved.
+blobName : "storagetestdemo123"
+location: "eastus"
+# event subscriptions names(user defined)
+subscriptionNames : []
+#has to be unique across azure(TODO: ADD RESOURCE GROUP NAME)
+systemTopicName : "storagesystemtopic-msforecast-rg"
+#TODO:this has to be taken from the azure portal 
+functionAppResourceId : "/subscriptions/<your-subscription-id-here>/resourceGroups/<resource-group>/providers/Microsoft.Web/sites/<docker-enabled-function-app>"
+#FUNCTIONS TO BE SUBSCRIBED WITH STORAGE AND ML SYSTEM TOPIC
+# Order of functions: 1. Storage Account linked, 2. ML Event linked, 3. Timer Trigger linked
+
+# FunctionNames : [["BlobCreated"],
+#                   ["APIDataRefresh"],
+#                   ["BlobCreated",
+#                   "BlobDeleted",
+#                   "ModelDeployment",
+#                   "ModelRegistered",
+#                   "RunCompleted"],
+#                   ["BlobCreated",
+#                   "BlobDeleted",
+#                   "ModelDeployment",
+#                   "ModelRegistered",
+#                   "RunCompleted"],
+#                   ["BlobCreated",
+#                   "BlobDeleted",
+#                   "ModelDeployment",
+#                   "ModelRegistered",
+#                   "RunCompleted"]]
+eventActionMapping : [{"BlobCreated": "ResampleAndDataValidation"},
+                      {},
+                      {"Timer1": "APIDataRefresh"},
+                      {"CustomEvent1":"PreprocessingModule","CustomEvent2": "ModelDriftValidation", "CustomEvent3": "MergeData", "CustomEvent4":"Datainterpolation", "CustomEvent5":"OnlineScoring","CustomEvent6":"ModelRetraining","CustomEvent7":"AlternateModelDeployment", "CustomEvent8":"ModelDeployment","CustomEvent9":"Notification"}
+                      ]
+#DO NOT MODIFY (STANDARD PARAMETERS)
+endpointType : "AzureFunction"
+systemTopicType : "Microsoft.EventGrid/systemTopics"
+subscriptionType : "Microsoft.EventGrid/systemTopics/eventSubscriptions"
+topicType : "Microsoft.Storage.StorageAccounts"
+sourceTopicType : "Microsoft.Storage/StorageAccounts"
+apiVersion : "2022-06-15"
+funcApiVersion : "2020-12-01"
+#====================================================================
+storageEventTypes : ["BlobCreated"]
+# Supported values:"BlobDeleted", "DirectoryCreated","DirectoryDeleted","BlobRenamed"
+#one time configuartion depending on the platform
+maxEventsPerBatch : "1"
+preferredBatchSizeInKilobytes : "64"
+maxDeliveryAttempts : "30"
+eventTimeToLiveInMinutes : "1440"
+templateSavePath : "./event_grid_setup"
+templateAutoRun : True
+mlTopicType : "Microsoft.MachineLearningServices.Workspaces"
+functionType : "Microsoft.Web/sites/functions"
+#================================================================
+#has to be unique across azure(TODO: ADD RESOURCE GROUP NAME)
+mlSystemTopicName : "mlSystemTopic-msforecast-rg"
+#TODO:this has to be taken from the azure portal 
+mlWorkspaceId : "/subscriptions/<your-subscription-id-here>/resourceGroups/<resource-group>/providers/Microsoft.MachineLearningServices/workspaces/<workspace-name>"
+mleventsTypes : []
+# Supported values: "ModelRegistered","ModelDeployed","RunCompleted","RunStatusChanged","DatasetDriftDetected"
+identity : "SystemAssigned"
+
+# Registry Credentials
+registry_server: "acrforecasting.azurecr.io"
+repository_name: "goliveeventsetup"
+image_tag: "latest"
+local_directory_folder: "."

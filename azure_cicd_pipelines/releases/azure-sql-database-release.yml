@@ -1,0 +1,64 @@
+trigger:
+- none
+
+pool: 
+  vmImage: 'windows-latest'
+
+
+parameters:
+- name: ServiceConnection
+  type: string
+  default: arm-service-connection
+  displayName: Service Connection
+
+- name: keyvaultname
+  type: string
+  default: fp2-test-aml-kv
+  displayName: Key Vault Name
+
+
+variables:
+  subscription: '${{ parameters.ServiceConnection}}'
+  keyVaultName: '${{ parameters.keyvaultname }}'
+  SQLfilepath: '$(System.DefaultWorkingDirectory)\database'
+  SQLfilename: 'staticDataPopulation.sql'
+
+steps:
+- task: AzureKeyVault@2
+  displayName: 'Azure Key Vault: Getting SQL Secrets'
+  inputs:
+    azureSubscription: $(subscription)
+    KeyVaultName: $(keyVaultName)
+    SecretsFilter: 'forecasting-sql-server, forecasting-database, forecasting-sql-user, forecasting-sql-pwd'
+
+- task: DownloadBuildArtifacts@0
+  inputs:
+    buildType: 'specific'
+    project: 'ForecastingPlatform'
+    pipeline: 'build-forecasting-sql-database'
+    downloadType: 'single'
+    artifactName: 'database'
+    downloadPath: '$(System.ArtifactsDirectory)'
+
+- task: SqlAzureDacpacDeployment@1
+  displayName: 'Deploy Azure SQL with DacpacTask'
+  inputs:
+    azureSubscription: $(subscription)
+    ServerName: '$(forecasting-sql-server).database.windows.net, 1433'
+    DatabaseName: '$(forecasting-database)'
+    SqlUsername: '$(forecasting-sql-user)'
+    SqlPassword: '$(forecasting-sql-pwd)'
+    deployType: 'DacpacTask' 
+    DeploymentAction: 'Publish'
+    DacpacFile: '$(System.ArtifactsDirectory)\database\database.dacpac'
+
+- task: SqlDacpacDeploymentOnMachineGroup@0
+  inputs:
+    TaskType: 'sqlQuery'
+    SqlFile: '${{variables.SQLfilepath}}\${{variables.SQLfilename}}'
+    ServerName: '$(forecasting-sql-server).database.windows.net, 1433'
+    DatabaseName: '$(forecasting-database)'
+    AuthScheme: 'sqlServerAuthentication'
+    SqlUsername: '$(forecasting-sql-user)'
+    SqlPassword: '$(forecasting-sql-pwd)'
+  displayName: ' Run static tables script'

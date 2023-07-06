@@ -1,0 +1,79 @@
+trigger:
+- none
+
+pool: 
+  vmImage: 'ubuntu-latest'
+
+parameters:
+
+- name: ServiceConnection
+  type: string
+  default: arm-service-connection
+  displayName: Service Connection Name
+
+- name: functionappName
+  type: string
+  default: fp2-test-fapp
+  displayName: Function App Name 
+
+- name: acrName
+  type: string
+  default: fp2testamlcr
+  displayName: Azure Container Registry Name (to be used for docker)
+
+- name: resourcegroupName
+  type: string
+  default: fp2-test-rg
+  displayName: Resource group
+
+- name: workspaceName
+  type: string
+  default: fp2_amlws
+  displayName: AML workspace name
+
+
+variables:
+- name: acrlsName
+  value: '${{ parameters.acrName }}.azurecr.io'
+- name: imageName
+  value: ''
+- name: subscriptionId
+  value: ''
+
+steps:
+
+- task: AzureCLI@2
+  name: docker
+  inputs:
+    connectedServiceNameARM: '${{ parameters.ServiceConnection }}'
+    scriptType: bash
+    scriptLocation: inlineScript
+    inlineScript: |
+      mv ./utilities ./platform_code/code
+      cd ./platform_code 
+      pip install -r requirements.txt
+      python deployment.py 
+      source buildDocker.sh -a $(acrlsName) -r framework_af
+      image_identifier=$image_identifier
+      echo "Got the image identifier"
+      echo "##vso[task.setvariable variable=imageName]$image_identifier"
+  displayName: 'Run deployment.py and recieve the image name of built docker of function'
+
+- task: AzureCLI@2
+  displayName: 'Get Subscriptionid for Function app'
+  inputs:
+    azureSubscription: '${{ parameters.ServiceConnection }}'
+    scriptType: 'bash'
+    scriptLocation: inlineScript
+    inlineScript: |
+        subscription_id=$(az account show --query 'id' --output tsv)
+        echo "##vso[task.setvariable variable=subscriptionId]$subscription_id"
+        
+
+- task: AzureFunctionAppContainer@1
+  displayName: 'Use the image name and deploy to functionapp'
+  inputs:
+    azureSubscription: '${{ parameters.ServiceConnection }}'
+    appName: '${{ parameters.functionappName }}'
+    imageName: $(imageName)
+    appSettings: '-AML_WORKSPACE_NAME ${{ parameters.workspaceName }} -RESOURCE_GROUP_NAME ${{ parameters.resourcegroupName }} -SUBSCRIPTION_ID $(subscriptionId)'

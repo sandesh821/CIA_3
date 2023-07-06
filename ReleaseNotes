@@ -1,0 +1,134 @@
+#Copyright (c) Microsoft. All rights reserved.
+
+Power & Utilities Forecasting Framework 3.0
+May 15th, 2023
+
+○ UI:
+	• Updated styling for all tables
+	• Added home page button /link 
+	• Changed page Title 
+	• Source data table layout and placement
+	• Saved user selections for file merging to database
+	• Save experiment and Schedule experiment buttons validation with pop up messages
+	• Go live configuration page (Model selection, data ingestion choice selection, event configurations, deployment manager, notification configurations)
+	• Added Quantile List configuration in UI
+○ Go Live:
+	• Automated MlOps: Setup Azure Function app for controlling the go live flow:
+		○ Invoke API Manager
+		○ Data operations: Data cleaning, transformation, time zone correction, interpolation
+		○ Drift detection: Data and Target drift
+		○ Notification
+		○ Model Retraining
+		○ Alternate model deployment
+		○ Master data management
+	• Deployment Manager: Create a AKS cronjob or Timer Azure Function for running models
+	• API Manager
+○ Training platform:
+	• Percentile bands(TFT/DeepMC) 
+	• Virtual Sensor 
+○ Power BI:
+	• Updated report branding (added logo)
+	• Percentile band report in Error Analysis Dashboard
+#===========================================================================================================================================
+Power & Utilities Forecasting Framework 2.0
+February 3rd, 2023
+Bug Fixes: 
+	- Enhanced output folder structure to include experiment set name
+	- Resampling logic updates in pre-processing
+	- First SQL Connection failure issue
+	- Fixed Error Analysis graphs 
+
+Enhancements: 
+	- Infra Setup Pipeline
+		○ Parameterized Infra deployment pipeline
+		○ Automated SQL DB deployment
+	- Forecasting UI Workflow
+		○ Create experiments for different types of entities ("Demand", "Solar" and "Wind")
+		○ Auto EDA (Column level and Generic)
+		○ Automated feature Engineering( Includes addition of new features , Feature exploration , Interpolation, Resampling 
+		○ Source Data Cleansing ( Includes Timezone conversion, Lower bound and upper bound handling , missing values handler)
+		○ Additional Column Level Validations to Transformations screen
+		○ Provenance: Better Experiment Governance and tracking with detailed run configurations, logs, Data and AML pipeline reference links and status 
+		○ Abalation:
+			§ Schedule experiments using UI
+			§ Generate experiment configurations from SQL database
+			§ Load saved experiments and skip entity as feature in abalation algo
+		○ Data persistence using SQL database
+		○ Error Analysis
+		
+	- Forecasting Platform
+		○ Infra Manager: Infrastructure (AML compute clusters) orchestration framework, to select and allocate compute cluster to experiments as per the availability of cores in region
+		○ Config YAML generation: Integrated with SQL DB to read the experiment information
+		○ ML Models:
+			§ Optimized Hyperparameter tuning parameter ranges
+			§ Experiment suggestions for Abalation
+			§ Aggregator to view metrics for different date ranges
+			§ Experiment tracking and logger - Loss tracking for each epoch and detailed experiment run tracking for different stages (tuning, training, validation)
+			
+		○ ML Pipeline: 
+			§ Enhanced pipeline to include Infrastructure (AML compute clusters) orchestration, config yaml generation and ML Ops Pipeline in one flow
+			§ Moved data major part of pre-processing stage to UI workflow
+		○ Scheduler: Time Scheduled Azure Function to run training and scoring pipelines once submitted from UI workflow
+		○ Deployment Manager and Online Scoring: Automated deployment scripts for deploying selected model (TFT and DeepMC) to AKS
+	
+	- Power BI: Dashboard and reports for Error Analysis graphs and metrics
+
+#===========================================================================================================================================
+
+Documentation: <Check /docs/ folder>
+- Infrastructure_Document.docx has detailed documentation of steps required for executing release pipeline for initial infrastructure setup
+
+Power & Utilities Forecasting Framework 1.1
+November 3rd 2022
+
+Bug Fixes: 
+- Training and validation data treated differently to avoid data leakage.
+- Replaced TFT version of Darts with Google algorithm for correct model training 
+- Handle custom lookahead values in data preprocessing of future covariates (added support for minute level granularity)
+
+Enhancements: 
+- Enhanced DeepMC solution to support hyperparameter tuning of all internal models 
+- Reproducibility: Added naming scheme to reproduce details of each experiment run including code version, source data, configurations, error analysis and validation results 
+- Scalability: 
+	a. DevOps Release Pipeline for automated infrastructure setup (initial setup)
+	b. Added shell script to run multiple experiments parallely across multiple clusters 
+- Data Preprocessing:
+	a. Handled outliers
+	b. Enhanced interpolation techniques
+	c. Missing value handler: Reindexing of dates
+- Scoring pipeline: Integrated Error Analysis tool
+- Configuration YAML Generator: Prepare multiple YAMLs using CSV file and standard template
+- Added support for training on only past covariates or multiple future covariates files
+- Performance: 
+	a. Optimized hyperparameter tuner (Optuna) using multivariate sampler
+	b. Parallel training of internal models for DeepMC algorithm
+	c. Hyperparameter tune all internal models on separate nodes and save the results for retraining
+- Telemetry: Experiment execution and child run details logged in Azure SQL database
+- Security: 
+	a. CredScan will execute with every code checkin
+	b. Moved Account Key for Blob Storage/ ADLS Gen2 datastore will be loaded from Key Vault
+
+Documentation: <Check /docs/ folder>
+- Forecasting_Checklist.docx contains the file useful to initiate new engagements.
+- Service_Connection.docx provides instructions to set up service connection. 
+- YAML_Explainer.docx has detailed documentation to create configurations file for Low Code/No Code execution.
+- Infrastructure_Document.docx has detailed documentation of steps required for executing release pipeline for initial infrastructure setup
+
+#===========================================================================================================================================
+Power & Utilities Forecasting Framework 1.0
+July 8th 2022
+
+Bug Fixes: 
+- Future covariates treated differently to avoid data leakage.
+
+Enhancements: 
+- No Code/Low Code setup: We created a YAML config file to provide a specification for forecasting setup, preprocessing instructions, and training configurations.   
+- Extensibility: The YAML specification file provides flexibility to test various data and ML engineering approaches. Moreover, such a format allows for future-proofing of the forecasting platform. 
+- Scalability: We ported the code to AzureML, allowing us to leverage AzureML super powers of pipeline-based automatic fan-out to enable parallel execution of multiple ML models. 
+- Unified Interface: We encapsulate the complexity in data preparation and model training steps for a large variety of time series forecasting approaches through a standard unified interface. 
+- Open Source Baselines: We leverage the open-source DARTS library for time series forecasting. Thus, we are well-positioned to quickly adapt newer breakthroughs in time-series forecasting algorithms from academia or industry implemented in DARTS.
+
+Documentation: <Check /docs/ folder>
+- Forecasting_Checklist.docx contains the file useful to initiate new engagements.
+- Service_Connection.docx provides instructions to set up service connection. 
+- YAML_Explainer.docx has detailed documentation to create configurations file for Low Code/No Code execution.

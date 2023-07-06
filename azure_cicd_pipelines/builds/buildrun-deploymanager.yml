@@ -1,0 +1,44 @@
+trigger:
+- none
+
+pool:
+  vmImage: 'ubuntu-latest' 
+
+parameters:
+- name: ServiceConnection
+  type: string
+  default: arm-service-connection
+  displayName: Service Connection
+- name: experimentsetId
+  type: number
+  displayName: Experiment Set ID
+  default: 56
+- name: experimentsetName
+  type: string
+  displayName: Experiment Set Name
+  default: solarewbrown
+- name: fileUpload
+  type: boolean
+  displayName: File Upload
+  default: False
+- name: deploymentType
+  type: string
+  displayName: Deployment Type
+  default: best
+
+steps:
+- task: UsePythonVersion@0
+  inputs:
+    versionSpec: '3.8'  
+    addToPath: true
+
+- task: AzureCLI@2
+  inputs:
+    azureSubscription: '${{ parameters.ServiceConnection }}'
+    scriptType: 'bash'
+    scriptLocation: 'inlineScript'
+    inlineScript: |
+      python -m pip install -r requirements_aks.txt
+      echo "Requirements done"
+      python buildRunDeploymentManager.py ${{ parameters.experimentsetId }} ${{ parameters.experimentsetName }} ${{ parameters.fileUpload }} ${{ parameters.deploymentType }}
+  displayName: 'Run Go live setup in subscription'

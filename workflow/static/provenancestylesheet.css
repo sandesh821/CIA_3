@@ -1,0 +1,58 @@
+/* #Copyright (c) Microsoft. All rights reserved. */
+#page-content{
+  font-size: 14px;
+  font-family: 'Segoe UI';
+}
+#experimentList table td{
+  font-size: 12px;
+}
+#experimentList table th{
+  font-weight: bold;
+}
+#experimentList table th, #experimentList table td {
+  font-family: "Segoe UI";
+}
+
+.leftDiv, .rightDiv{
+  width:50%
+}
+.left, .leftDiv{
+  float: left;
+}
+
+.right, .rightDiv{
+  float: right;
+}
+
+.detailSection{
+  float:left;
+  position: relative;
+  width: 100%;
+  margin-top: 20px;
+}
+
+.clear{
+  clear: both;
+}
+
+.detailsDiv{
+  width:100%
+}
+
+.listHeaders{
+  font-weight: bold;
+}
+
+#errorAnalysisButtonProvenance:disabled{
+  background-color: gray;
+}
+#errorAnalysisButtonProvenance:disabled:hover{
+  cursor: auto;
+  background-color: gray;
+}
+
+.headerDiv{
+  width: 100%;
+  border-bottom: 1px white solid;
+  margin-bottom: 5px;
+}

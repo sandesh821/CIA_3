@@ -1,0 +1,185 @@
+pr: none
+trigger: none
+
+parameters:
+#Service connection details
+- name: ServiceConnection
+  type: string
+  default: arm-service-connection
+  displayName: Service Connection
+
+- name: AppRegDisplayName
+  type: string
+  default: arm-service-principal
+  displayName: Registered App for Service Principal on customer subscription
+
+- name: location
+  type: string
+  default: eastus
+  values:
+  - eastus
+  - eastus2
+  - southcentralus
+  - southeastasia
+  - westcentralus
+  - westeurope
+  - westus
+  - westus2
+  - centralus
+  - australiaeast
+  displayName: Location
+
+
+- name: ResourcegroupName
+  type: string
+  default: fp2-test-rg
+  displayName: Resource group Name (If using already existing RG plz enter that)
+
+- name: AMLworkspace
+  type: string
+  displayName: AML to use 
+
+- name: AMLstorage
+  type: string
+  displayName: AML storage to use 
+
+- name: ACRName
+  type: string
+  displayName: ACR to use 
+
+- name: keyVaultName
+  type: string
+  displayName: keyVault to use
+
+- name: webappName
+  type: string
+  displayName: Webapp being used
+
+- name: functionappName
+  type: string
+  displayName: Functionapp being used
+
+- name: aksName
+  type: string
+  default: ""
+  displayName: AKS Name
+
+#Conditions for deploying specific resources
+
+- name: DeployGoLiveFunctionApp
+  default: false
+  values:
+  - true
+  - false
+  displayName: Deploy Go live FunctionApp
+
+- name: ExperimentSetName
+  type: string
+  default: ""
+  displayName: Experiment Set Name
+
+- name: golivestorageName
+  type: string
+  default: streamingmasterdaya
+  displayName: Name of the Go live storage
+
+
+
+
+variables:
+
+  - name: resourceGroup
+    value: '${{ parameters.ResourcegroupName }}'
+  - name: golivefunctionappName
+    value: 'Golive-${{ parameters.experimentSetName }}App'
+  - name: subscription_id
+    value: ''
+
+  
+stages:
+- stage: 'Dev'
+  displayName: 'Dev'
+  jobs:
+  - job: "Deploy_GoLiveAzureFunctionApp"
+    condition: eq(${{ parameters.DeployGoliveFunctionApp }}, 'true')
+    displayName: "Creating Go Live Azure Function App"
+    pool:
+      vmImage: 'ubuntu-latest'
+    timeoutInMinutes: 0
+    steps:
+    - task: AzureCLI@2
+      displayName: 'Get Subscriptionid for Go Live Function app'
+      inputs:
+        azureSubscription: '${{ parameters.ServiceConnection }}'
+        scriptType: 'bash'
+        scriptLocation: inlineScript
+        inlineScript: |
+            subscription_id=$(az account show --query 'id' --output tsv)
+            echo "##vso[task.setvariable variable=subscription_id]$subscription_id"
+    - task: AzureResourceGroupDeployment@2
+      displayName: 'Deploy Azure Function App with hosting plan, storage account and application insights'
+      inputs:
+        azureSubscription: '${{ parameters.ServiceConnection }}'
+        action: 'Create Or Update Resource Group'
+        resourceGroupName: '$(resourceGroup)'
+        location: ${{ parameters.location }}
+        templateLocation: 'Linked artifact'
+        csmFile: '$(Build.SourcesDirectory)/azure_cicd_pipelines/templates/golivefunctionapp.json'
+        overrideParameters: -golivefunctionAppName $(golivefunctionappName) -location ${{ parameters.location }} -resourceGroupName $(resourceGroup) -subscriptionId $(subscription_id) -amlworkspaceName ${{ parameters.AMLworkspace}}  -amlstorageaccountName ${{ parameters.AMLstorage}} -streamstorageaccountName ${{ parameters.golivestorageName }} -aksName ${{ parameters.aksName }} -acrName ${{ parameters.ACRName }} -keyvaultName ${{ parameters.keyVaultName }} -functionappName ${{ parameters.functionappName }}
+        deploymentMode: 'Incremental'
+    - task: AzureCLI@2
+      displayName: 'Add access policies to Key Vault'
+      inputs:
+        azureSubscription: '${{ parameters.ServiceConnection }}'
+        scriptType: 'bash'
+        scriptLocation: inlineScript
+        inlineScript: |
+            subscription_id=$(az account show --query 'id' --output tsv)
+            identity_object_id=$(az functionapp show --name $(golivefunctionappName) --resource-group $(resourceGroup) --query "identity.principalId" -o tsv)
+            acr_id=$(az acr show --resource-group $(resourceGroup) --name ${{ parameters.ACRName }}  --query "id" -o tsv)
+            az role assignment create --role "Contributor" --assignee-object-id  $identity_object_id --assignee-principal-type "ServicePrincipal" --scope /subscriptions/$subscription_id/resourceGroups/$(resourceGroup)/providers/Microsoft.MachineLearningServices/workspaces/${{ parameters.AMLworkspace}}
+            az role assignment create --role "Contributor" --assignee-object-id  $identity_object_id --assignee-principal-type "ServicePrincipal" --scope /subscriptions/$subscription_id/resourceGroups/$(resourceGroup)/providers/Microsoft.Storage/storageAccounts/${{ parameters.golivestorageName }}
+            az role assignment create --assignee $identity_object_id --role "acrpull" --scope $acr_id
+            az keyvault set-policy --name ${{ parameters.keyVaultName }} --object-id $identity_object_id --secret-permissions get list --key-permissions get list
+  
+
+  - job: UpdateConfigurationSettings
+    displayName: "Update Webapp Configuration Settings"
+    pool:
+      vmImage: 'ubuntu-latest'
+    steps:
+    - task: AzureCLI@2
+      displayName: "Retrieve Current Configuration Settings"
+      inputs:
+        azureSubscription: '${{ parameters.ServiceConnection }}'
+        scriptType: "bash"
+        scriptLocation: "inlineScript"
+        inlineScript: |
+          # Fetch current configuration settings
+          currentSettings=$(az webapp config appsettings list -g ${{ parameters.ResourcegroupName }} -n ${{ parameters.webappName }} --query '[].{Name:name, Value:value}' --output json)
+
+          # Output the current settings for verification
+          echo $currentSettings
+
+    - task: AzureCLI@2
+      displayName: "Update Configuration Settings"
+      inputs:
+        azureSubscription: '${{ parameters.ServiceConnection }}'
+        scriptType: "bash"
+        scriptLocation: "inlineScript"
+        inlineScript: |
+          # Update configuration settings
+          az webapp config appsettings set -g ${{ parameters.ResourcegroupName }} -n ${{ parameters.webappName }} --settings AKSSERVICE=${{ parameters.aksName }} ACR=${{ parameters.ACRName }} KEYVAULT=${{ parameters.keyVaultName }} GOLIVESTORAGEACCOUNTNAME=${{ parameters.golivestorageName }} GOLIVEFUNCTIONAPP=$(golivefunctionappName) FUNCTIONAPPNAME=${{ parameters.functionappName }}
+
+    - task: AzureCLI@2
+      displayName: "Verify Updated Configuration Settings"
+      inputs:
+        azureSubscription: '${{ parameters.ServiceConnection }}'
+        scriptType: "bash"
+        scriptLocation: "inlineScript"
+        inlineScript: |
+          # Verify the updated configuration settings
+          updatedSettings=$(az webapp config appsettings list -g ${{ parameters.ResourcegroupName }} -n ${{ parameters.webappName }} --query '[].{Name:name, Value:value}' --output json)
+
+          # Output the updated settings for verification
+          echo $updatedSettings

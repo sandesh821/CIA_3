@@ -1,0 +1,148 @@
+#Copyright (c) Microsoft. All rights reserved.
+SourceConfig: 
+  source_dict : {"Owner":"XYZ", "Site name":"Site1", "Resource Type":"Solar" , 
+              "Resource Configuration":"Fixed Axis","Manufacturer Name":"Man1",
+              "Model Name" : "Model1",
+              "Latitude":44.1381958, "Longitude":87.3146306} # Currently not used in Preprocess layer
+
+  scripts_directory : './code/preprocess' #DO NOT MODIFY
+  datastore_name :  'workflowdata' #**Mandatory | Azure ML DATASTORE name
+
+  # entity details like price , power etc...
+  #**Mandatory | Example: 'entity.csv'
+  merge_data : 'workflow/$$ExperimentSetName$$/$$MergedFile$$'
+
+  datetime_col_applicable : 'DateTime' #Future DateTime field in future covariates
+  datetime_col_available : 'AvailableTime'  #DateTime field in future covariates
+  source_datetime_col : 'DateTime' #**Mandatory | DateTime field in Past covariates and entity file
+  
+PreprocessConfig:
+  # Addition or removal of columns configuration(implementation path for new features,path : ./preprocess/FeatureUtils.py)
+  manage_column : 
+   - reindex_cols : $$ReindexCols$$ #Example: ['Power'] # List of columns for which reindexing should happen
+  #** Below fields are mandatory
+  
+  dataset_start_time : '$$TrainStart$$'
+  futureCovariates: $$FutureCovariates$$
+  future_covariate_times_str : ["$$ForecastTime$$"] # Future covariates api runs atleast once in a day
+  future_covariate_lookahead : $$ForecastHorizon$$ #NOTE:Should be same as lookahead
+  lookback : $$Lookback$$
+  lookahead : $$ForecastHorizon$$  
+  frequency : $$Granularity$$
+  frequency_duration : "$$GranularityUnits$$"
+  output_location : 'cleaned_data' 
+
+PipelineConfig:
+  #** All fields are mandatory
+  experimentName : "$$ExperimentSetName$$"
+  experimentTag : "$$experimenttag$$"
+  preprocessEnvironmentName : "frameworkEnvironment"
+  preprocessCluster : "preprocesscluster"
+  environmentName : ["$$framework$$"] 
+  cpuClusterName : ["$$Compute$$"]
+  scriptSourceDir : "./code"
+  environmentYAMLFile : ["$$environmentYAMLFile$$"]
+  entryPoint : ["$$entryPoint$$"] 
+  dataFileName : ['$$dataFileName$$'] 
+  outputFolderName : "outputs"
+  models : ["$$algorithm$$"] 
+  # Internal Pipeline config for DeepMC
+  internalPipelineConfig : {"environmentName": "deepmcFrameworkEnvironment"
+                            ,"environmentYAMLFile": "deepmcenvironment.yml"
+                            ,"entryPoint": "mlcode/trainDeepMCInternalModels.py"
+                            ,"cpuClusterName": "$$internalTrainingCluster$$"
+                            ,"experimentName": "internalTraining"
+                            }
+  timeout: 9223372036854775807
+
+TrainConfig:
+  requiredColumns: $$PastCovariates$$
+  targetColumn: '$$Entity$$'
+  futureCovariates: $$FutureCovariates$$
+  dateField: "DateTime"
+  train_end: "$$TrainEnd$$" #Training dataset end
+  val_start: "$$ValStart$$" #This is applicable only for DeepMC
+  val_end: "$$ValEnd$$" #Validation dataset end date
+  quantileList: $$quantileList$$
+  
+  n_tuning_trials : 10
+  isOptimizationEnabled : True
+  isValidationEnabled : True
+  isErrorAnalysisEnabled : False
+
+  #Slicing hyperparameters
+  parameters : {
+    "DartsTCN" : {"n_epochs": 1, "dropout":0.2,"dilation_base":2,"weight_norm":True,"hidden_size":2,"lstm_layers":True,"kernel_size":5,"num_filters":3,"random_state":0, "verbose":True},
+    "DartsTFT" : {"n_epochs": 1, "dropout":0.12,"num_attention_heads":4,"hidden_size":19,"lstm_layers":1,"batch_size":32,"add_relative_index":False,"random_state":0, "verbose":True},
+    "DartsNBeats" : {"num_stacks" : 10 , "num_blocks": 1 , "num_layers" : 4 , "layer_widths" : 512 , "n_epochs" : 1 , "batch_size" : 64 , "nr_epochs_val_period" : 1 , "verbose" : False },
+    "DeepMC" : {"quantileList": $$quantileList$$,"Blockno":"block2","epochs":20,"trunc":512, "batch_size":32},
+    "DeepMCinternalParams" : {"params": [{"epochs":30,"batch_size":32 ,"learning_rate":0.01,"activation":"relu", "droprate":0.1,"loss":"mse"},{"epochs":30,"batch_size":32 ,"learning_rate":0.01,"activation":"relu", "droprate":0.1,"loss":"mse"},{"epochs":30,"batch_size":32 ,"learning_rate":0.01,"activation":"relu", "droprate":0.1,"loss":"mse"},{"epochs":30,"batch_size":32 ,"learning_rate":0.01,"activation":"relu", "droprate":0.1,"loss":"mse"},{"epochs":30,"batch_size":32 ,"learning_rate":0.01,"activation":"relu", "droprate":0.1,"loss":"mse"},{"epochs":30,"batch_size":32 ,"learning_rate":0.01,"activation":"relu", "droprate":0.1,"loss":"mse"},{"epochs":30,"batch_size":32 ,"learning_rate":0.01,"activation":"relu", "droprate":0.1,"loss":"mse"},{"epochs":30,"batch_size":32 ,"learning_rate":0.01,"activation":"relu", "droprate":0.1,"loss":"mse"},{"epochs":30,"batch_size":32 ,"learning_rate":0.01,"activation":"relu", "droprate":0.1,"loss":"mse"},{"epochs":30,"batch_size":32 ,"learning_rate":0.01,"activation":"relu", "droprate":0.1,"loss":"mse"},{"epochs":30,"batch_size":32 ,"learning_rate":0.01,"activation":"relu", "droprate":0.1,"loss":"mse"},{"epochs":30,"batch_size":32 ,"learning_rate":0.01,"activation":"relu", "droprate":0.1,"loss":"mse"},{"epochs":30,"batch_size":32 ,"learning_rate":0.01,"activation":"relu", "droprate":0.1,"loss":"mse"},{"epochs":30,"batch_size":32 ,"learning_rate":0.01,"activation":"relu", "droprate":0.1,"loss":"mse"},{"epochs":30,"batch_size":32 ,"learning_rate":0.01,"activation":"relu", "droprate":0.1,"loss":"mse"},{"epochs":30,"batch_size":32 ,"learning_rate":0.01,"activation":"relu", "droprate":0.1,"loss":"mse"},{"epochs":30,"batch_size":32 ,"learning_rate":0.01,"activation":"relu", "droprate":0.1,"loss":"mse"},{"epochs":30,"batch_size":32 ,"learning_rate":0.01,"activation":"relu", "droprate":0.1,"loss":"mse"},{"epochs":30,"batch_size":32 ,"learning_rate":0.01,"activation":"relu", "droprate":0.1,"loss":"mse"},{"epochs":30,"batch_size":32 ,"learning_rate":0.01,"activation":"relu", "droprate":0.1,"loss":"mse"},{"epochs":30,"batch_size":32 ,"learning_rate":0.01,"activation":"relu", "droprate":0.1,"loss":"mse"},{"epochs":30,"batch_size":32 ,"learning_rate":0.01,"activation":"relu", "droprate":0.1,"loss":"mse"},{"epochs":30,"batch_size":32 ,"learning_rate":0.01,"activation":"relu", "droprate":0.1,"loss":"mse"},{"epochs":30,"batch_size":32 ,"learning_rate":0.01,"activation":"relu", "droprate":0.1,"loss":"mse"}],
+    "tuningtrials" : 3 },
+    "TFT" : { "quantileList": $$quantileList$$,"max_epochs" : 50, "random_seed": 1, 'gradient_clip_val': 0.003339327472111634, 'hidden_size': 11, 'dropout': 0.12290993546920369, 'hidden_continuous_size': 11, 'attention_head_size': 4, 'learning_rate': 0.0933254300796991,"batch_size" : 32}
+  }
+
+ScoringConfig:
+  modelName : "$$algorithm$$"
+  sourceFileName : "$$scoringdata$$"
+  requiredColumns: $$PastCovariates$$
+  targetColumn: "$$Entity$$"
+  futureCovariates: $$FutureCovariates$$
+  dateField : "DateTime"
+  modelPath : "outputs/$$ExperimentSetName$$/$$experimenttag$$/$$InternalRunID$$/"
+  dataFolderName : "data/$$experimenttag$$/"
+  isErrorAnalysisEnabled : True
+  descalingEnabled : False
+  descalingColumn : ''
+  numberOfTurbines : 5
+  errorAnalysisConfig : {   
+                            "train_end": "$$ValEnd$$" #Training & Validation end (Prediction input to contain 24 lookback steps)
+                            ,"val_start": "$$TestStart$$" #Test start date (assuming there is a minimum difference between two points is equal to lookahead)
+                            ,"val_end": "$$TestEnd$$" #Test end date
+                            ,"isScore" : True
+                        }
+  # Parameters to get predictions
+  parameters : {
+      "DartsTFT" : {
+        "n" : 6
+        ,"forecast_horizon" : $$ForecastHorizon$$
+        ,"verbose" : False
+        ,"last_points_only" : False }, 
+      "DartsTCN" : {
+        "n" : 6
+        ,"forecast_horizon" : $$ForecastHorizon$$
+        ,"verbose" : False
+        ,"last_points_only" : False }, 
+      "DartsNBeats" : {
+        "n" : 6
+        ,"forecast_horizon" : $$ForecastHorizon$$
+        ,"verbose" : False
+        ,"last_points_only" : False }, 
+      "DeepMC" : {
+        "horizon" : $$ForecastHorizon$$
+        ,"trunc" : 512
+        ,"lookback" : $$Lookback$$
+        ,"freq" : "60min"
+        ,"frequency" : $$Granularity$$
+        ,"frequency_duration" : $$GranularityUnits$$
+        ,"predDate" : "$$TestStart$$"
+        ,"quantileList" : $$quantileList$$
+      },
+      "TFT" : {
+        "forecast_horizon" : $$ForecastHorizon$$
+        ,"frequency" : $$Granularity$$
+        ,"frequency_duration" : $$GranularityUnits$$
+        ,"lookback" : $$Lookback$$
+        ,"quantileList" : $$quantileList$$
+      }
+    }
+
+# This will be removed once deployment pipeline is setup
+ScoringPipelineConfig:
+  experimentName : "$$ExperimentSetName$$_scoring"
+  experimentSetName : "$$ExperimentSetName$$"
+  experimentTag : "$$experimenttag$$"
+  environmentName : "$$framework$$"
+  cpuClusterName : "$$Compute$$"
+  scriptSourceDir : "./code"
+  environmentYAMLFile : "$$environmentYAMLFile$$"
+  entryPoint : "$$scoringentryPoint$$"

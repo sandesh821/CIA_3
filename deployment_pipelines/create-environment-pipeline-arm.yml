@@ -1,0 +1,48 @@
+pr: none
+trigger: none
+
+variables:
+- template: /deployment_pipelines/variables_templates/variables.yml
+
+stages:
+- stage: 'Dev'
+  displayName: 'Dev'
+  jobs:
+  - job: "Provision_AzureML"
+    displayName: "Create Azure ML Resources including Cluster"
+    pool:
+      vmImage: 'ubuntu-latest'
+    timeoutInMinutes: 0
+    steps:
+    - task: AzureResourceGroupDeployment@2
+      inputs:
+        azureSubscription: '$(rm_service_connection)'
+        action: 'Create Or Update Resource Group'
+        resourceGroupName: '$(resource_group)'
+        location: $(location)
+        templateLocation: 'Linked artifact'
+        csmFile: '$(Build.SourcesDirectory)/deployment_pipelines/variables_templates/environment.json'
+        overrideParameters: '-baseName $(base_name) -envName $(env_name) -serverName $(sql.serverName) -sqlDBName $(sql.sqlDBName) -secValueSqlAdmin $(sql.sqlAdmin) -location $(location) -workspace $(workspace_name) -storageAccount $(storageAccountName) -keyvault $(keyVaultName) -appInsights $(applicationInsightsName) -acr $(containerRegistryName) -vmSize $(amlcompute.vmSize) -minNodeCount $(amlcompute.Nodes) -maxNodeCount $(amlcompute.maxNodes) -nodeIdleTimeBeforeScaleDown $(amlcompute.idleSecondsBeforeScaledown) -objectId $(amlcompute.objectId)'
+        deploymentMode: 'Incremental'
+      displayName: 'Deploy AML Resources to Azure'
+    - task: AzureCLI@2
+      inputs:
+        connectedServiceNameARM: '$(rm_service_connection)'
+        scriptType: bash
+        scriptLocation: inlineScript
+        inlineScript: az upgrade
+      displayName: 'Upgrade Azure CLI'
+    - task: AzureCLI@2
+      inputs:
+        connectedServiceNameARM: '$(rm_service_connection)'
+        scriptType: bash
+        scriptLocation: inlineScript
+        inlineScript: az extension add --name ml
+      displayName: 'Add ML Extension'
+    - task: AzureCLI@2
+      inputs:
+        connectedServiceNameARM: '$(rm_service_connection)'
+        scriptType: bash
+        scriptLocation: inlineScript
+        inlineScript: az ml datastore create --file '$(Build.SourcesDirectory)/deployment_pipelines/variables_templates/blobstore.yml' --resource-group $(resource_group) --workspace-name $(workspace_name) --name $(amldatastore.name)
+      displayName: 'Create Blob Datastore'

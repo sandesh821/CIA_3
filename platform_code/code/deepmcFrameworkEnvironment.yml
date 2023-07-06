@@ -1,0 +1,5 @@
+$schema: https://azuremlschemas.azureedge.net/latest/environment.schema.json
+name: deepmcFrameworkEnvironment
+image: mcr.microsoft.com/azureml/openmpi3.1.2-ubuntu18.04
+conda_file: deepmcenvironment.yml
+description: DeepMC Environment created from docker and conda

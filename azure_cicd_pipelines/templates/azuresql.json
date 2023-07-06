@@ -1,0 +1,86 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "serverName": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of the SQL logical server."
+      }
+    },
+    "sqlDBName": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of the SQL Database."
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
+    },
+    "administratorLogin": {
+      "type": "string",
+      "metadata": {
+        "description": "The administrator username of the SQL logical server."
+      }
+    },
+    "administratorLoginPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The administrator password of the SQL logical server."
+      }
+    },
+    "FirewallRule1_name": {
+      "type": "string",
+      "defaultValue": "FirewallRule1",
+      "metadata": {
+        "description": "Firewallrule1"
+      }
+    }
+  },
+    "resources": [
+      {
+        "type": "Microsoft.Sql/servers",
+        "apiVersion": "2021-08-01-preview",
+        "name": "[parameters('serverName')]",
+        "location": "[parameters('location')]",
+        "properties": {
+          "administratorLogin": "[parameters('administratorLogin')]",
+          "administratorLoginPassword": "[parameters('administratorLoginPassword')]"
+        }
+      },
+      {
+        "type": "Microsoft.Sql/servers/databases",
+        "apiVersion": "2021-08-01-preview",
+        "name": "[format('{0}/{1}', parameters('serverName'), parameters('sqlDBName'))]",
+        "location": "[parameters('location')]",
+        "sku": {
+          "name": "GP_S_Gen5",
+          "tier": "GeneralPurpose",
+          "family": "Gen5",
+          "capacity": 1
+        },
+        "dependsOn": [
+          "[resourceId('Microsoft.Sql/servers', parameters('serverName'))]"
+        ],
+        "properties": {
+          "autoExecuteValue": "Enabled"
+        }
+      },
+      {
+        "type": "Microsoft.Sql/servers/firewallRules",
+        "apiVersion": "2022-05-01-preview",
+        "name": "[concat(parameters('serverName'), '/', parameters('FirewallRule1_name'))]",
+        "properties": {
+          "startIpAddress": "0.0.0.0",
+          "endIpAddress": "0.0.0.0"
+        },
+        "dependsOn": [
+          "[resourceId('Microsoft.Sql/servers', parameters('serverName'))]"
+        ]
+      }
+    ]
+  }

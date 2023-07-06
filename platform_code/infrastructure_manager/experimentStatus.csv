@@ -1,0 +1,10 @@
+experiment,Cores,NodeCount,requestedCores,Compute,location,AssignedStatus
+experiment1,32,1,32.0,d32v3-32c-128-800-cent,centralus,True
+experiment1Internal,4,24,96.0,d4sv3-4c-16-32-east,eastus,True
+experiment2,4,1,4.0,d4sv3-4c-16-32-east,eastus,True
+experiment3,8,1,8.0,d13-8c-56-400-east,eastus,True
+experiment4,4,1,4.0,d4sv3-4c-16-32-east,eastus,True
+experiment5,32,1,32.0,d32dsv4-32c-128-1200-east,eastus,True
+experiment6Internal,8,24,192.0,d13-8c-56-400-east,eastus,True
+experiment7,32,1,32.0,d32dsv4-32c-128-1200-east,eastus,True
+experiment8,4,1,4.0,d4sv3-4c-16-32-east,eastus,True

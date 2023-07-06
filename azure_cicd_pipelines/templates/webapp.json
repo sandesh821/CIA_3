@@ -1,0 +1,160 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "webAppName": {
+      "type": "string",
+      "minLength": 2,
+      "metadata": {
+        "description": "Name of the Azure Web app to create."
+      }
+    },
+    "skuName": {
+      "type": "string",
+      "defaultValue": "B1",
+      "allowedValues": [
+        "F1",
+        "D1",
+        "B1",
+        "B2",
+        "B3",
+        "S1",
+        "S2",
+        "S3",
+        "P1",
+        "P2",
+        "P3",
+        "P4"
+      ],
+      "metadata": {
+        "description": "Describes plan's pricing tier and instance size. Check details at https://azure.microsoft.com/en-us/pricing/details/app-service/"
+      }
+    },
+    "skuCapacity": {
+      "type": "int",
+      "defaultValue": 1,
+      "minValue": 1,
+      "maxValue": 3,
+      "metadata": {
+        "description": "Describes plan's instance count"
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
+    },
+    "linuxFxVersion": {
+      "type": "string",
+      "defaultValue": "PYTHON|3.8",
+      "metadata": {
+        "description": "The Runtime stack of current web app"
+      }
+    },
+      "resourceGroupName": {
+       "type": "string",
+      "defaultValue": "[resourceGroup().name]",
+       "metadata": {
+      "description": "The name of the resource group"
+      }
+    },
+    "subscriptionId": {
+      "type": "string",
+      "defaultValue": "[subscription().subscriptionId]",
+      "metadata": {
+        "description": "The ID of the subscription"
+      }
+    },
+    
+    "amlworkspaceName": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of the AML workspace associated"
+      }
+    },
+    "amlstorageaccountName": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of the AML storageaccountName associated"
+      }
+  }},
+   "variables": {
+    "hostingPlanName": "[concat(parameters('webAppName'),'-asp')]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Web/serverfarms",
+      "apiVersion": "2022-03-01",
+      "name": "[variables('hostingPlanName')]",
+
+      "location": "[parameters('location')]",
+      "tags": {
+        "displayName": "HostingPlan"
+      },
+      "sku": {
+        "name": "[parameters('skuName')]",
+        "capacity": "[parameters('skuCapacity')]"
+      },
+      "kind": "linux",
+      "properties": {
+        "name": "[variables('hostingPlanName')]",
+        "reserved": true
+      }
+    },
+    {
+      "type": "Microsoft.Web/sites",
+      "apiVersion": "2022-03-01",
+      "name": "[parameters('webAppName')]",
+      "kind":  "app,linux",
+      "location": "[parameters('location')]",
+      "tags": {
+        "displayName": "Website"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/serverfarms/', variables('hostingPlanName'))]"
+      ],
+      "identity": {
+        "type": "SystemAssigned"
+      },
+      "properties": {
+        "httpsOnly": true,
+        "ftpsState": "FtpsOnly",
+        "name": "[parameters('webAppName')]",
+        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('hostingPlanName'))]",
+        "siteConfig": {
+          "linuxFxVersion": "[parameters('linuxFxVersion')]",
+          "appSettings": [
+            {
+              "name": "SCM_DO_BUILD_DURING_DEPLOYMENT",
+              "value": "true"
+            },
+            {
+              "name": "RESOURCEGROUP",
+               "value": "[concat('[\"', parameters('resourceGroupName'), '\"]')]"
+
+            },
+            {
+              "name": "SUBSCRIPTIONID",
+              "value": "[concat('[\"', parameters('subscriptionId'), '\"]')]"
+
+            },
+            {
+              "name": "AMLWORKSPACENAME",
+               "value": "[parameters('amlworkspaceName')]"
+            },
+            {
+              "name": "STORAGEACCOUNTNAME",
+               "value": "[parameters('amlstorageaccountName')]"
+            },
+            {
+              "name": "ErrorAnalysisReportURL",
+               "value": ""
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

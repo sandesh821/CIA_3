@@ -1,0 +1,6 @@
+$schema: https://azuremlschemas.azureedge.net/latest/azureBlob.schema.json
+name: forecastdatastore
+type: azure_blob
+description: Datastore pointing to a blob container.
+account_name: satyamldatastore
+container_name: mlcontainer
